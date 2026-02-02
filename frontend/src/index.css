@@ -1,0 +1,30 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.click-button {
+  @apply cursor-pointer active:scale-95 transition-colors
+}
+
+.grey-button {
+  @apply cursor-pointer active:scale-95 bg-gray-700 active:bg-gray-500 hover:bg-gray-600 transition-colors px-3 py-1 text-sm text-white rounded 
+}
+
+.grey-link-button {
+  @apply flex items-center text-gray-400 hover:text-gray-200 text-sm transition-colors
+}
+
+.scroll-dark::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-dark::-webkit-scrollbar-track {
+  background: #1f2937; /* dark gray track */
+}
+
+.scroll-dark::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* dark gray thumb */
+  border-radius: 4px;
+  border: 2px solid #1f2937; /* optional padding around thumb */
+}
