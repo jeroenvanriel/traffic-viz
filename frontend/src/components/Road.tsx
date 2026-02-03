@@ -21,7 +21,7 @@ function useRoadNetwork(sceneId?: string) {
   useEffect(() => {
     if (!sceneId) return;
 
-    fetch(`http://localhost:8000/scenes/${sceneId}/road`)
+    fetch(`http://localhost:8000/api/scenes/${sceneId}/road`)
       .then(res => res.json())
       .then(data => setRoadData({ polygons: data.polygons, bounds: data.bounds }));
   }, [sceneId]);

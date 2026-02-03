@@ -3,13 +3,13 @@ import xml.etree.ElementTree as ET
 from shapely.geometry import LineString
 from shapely.ops import unary_union
 
-router = APIRouter(prefix="/scenes/{scene_id}")
+from app.util import get_scene_root
 
-from app.config import SCENES_DIR
+router = APIRouter(prefix="/scenes/{scene_id}")
 
 @router.get("/road")
 async def get_road_network(scene_id: str):
-    road_file = SCENES_DIR / scene_id / "road.net.xml"
+    road_file = get_scene_root() / scene_id / "road.net.xml"
     tree = ET.parse(road_file)
     root = tree.getroot()
 

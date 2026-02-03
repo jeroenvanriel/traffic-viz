@@ -2,10 +2,13 @@
 
 
 a = Analysis(
-    ['main.py'],
+    ['app/main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[
+        ('../frontend/dist/index.html', 'frontend/dist'),
+        ('../frontend/dist/assets', 'frontend/dist/assets'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

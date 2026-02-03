@@ -54,7 +54,7 @@ export const useReplayController = create<ReplayController>((set, get) => ({
   }),
 
   load: async (sceneId: string) => {
-    const res_post = await fetch(`http://localhost:8000/scenes/${sceneId}/fcd/replay/load`, {
+    const res_post = await fetch(`http://localhost:8000/api/scenes/${sceneId}/fcd/replay/load`, {
       method: "POST"
     });
 
@@ -118,7 +118,7 @@ export const useReplayController = create<ReplayController>((set, get) => ({
 
     try {
       const res: Delta[] = await fetch(
-        `http://localhost:8000/scenes/${info.sceneId}/fcd/replay/deltas?start=${nextFetchStart}&length=${length}`
+        `http://localhost:8000/api/scenes/${info.sceneId}/fcd/replay/deltas?start=${nextFetchStart}&length=${length}`
       ).then(r => r.json());
 
       set(state => ({
