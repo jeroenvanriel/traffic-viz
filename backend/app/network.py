@@ -5,7 +5,7 @@ from shapely.ops import unary_union
 
 router = APIRouter(prefix="/scenes/{scene_id}")
 
-from .config import SCENES_DIR
+from app.config import SCENES_DIR
 
 @router.get("/road")
 async def get_road_network(scene_id: str):

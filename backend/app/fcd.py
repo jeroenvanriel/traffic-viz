@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconn
 from pathlib import Path
 import math, json, bisect, asyncio
 
-from .config import SCENES_DIR
+from app.config import SCENES_DIR
 
 router = APIRouter(prefix='/scenes/{scene_id}/fcd/replay')
 

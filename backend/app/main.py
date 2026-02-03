@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import SCENES_DIR
+from app.config import SCENES_DIR
 
 app = FastAPI()
 
