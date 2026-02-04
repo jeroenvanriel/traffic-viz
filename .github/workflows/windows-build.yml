@@ -1,9 +1,12 @@
 name: Build Windows EXE
 
 on:
-  push:
-    branches: [ "main" ]
+  # manual trigger from web interface
   workflow_dispatch:
+  # build when tagging
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build-windows:
