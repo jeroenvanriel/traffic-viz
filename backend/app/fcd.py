@@ -51,6 +51,7 @@ def precompute(frames_iterable, snapshot_interval=10.0):
     """Precompute snapshots and deltas for fcd playback.
     Snapshots are taken every time at least `snapshot_interval` time has passed since the last frame.
     Hence, slightly irregular frame times are supported.
+    The last frame is always added as snapshot.
     
     `frames_iterable`: yields frames as `(t: float, current_vehicles: dict)`"""
 
@@ -72,12 +73,16 @@ def precompute(frames_iterable, snapshot_interval=10.0):
         c, u, d = dicts_diff(prev_vehicles, current_vehicles)
         deltas[i+1] = { 't': t, 'c': c, 'u': u, 'd': d }
 
-        # snapshot if needed
-        if t - prev_snapshot_time >= snapshot_interval:
+        # snapshot if enough time has passed
+        if (t - prev_snapshot_time >= snapshot_interval):
             snapshots[i+1] = { 't': t, 'vehicles': current_vehicles }
             prev_snapshot_time = t
 
         prev_vehicles = current_vehicles
+
+    # ensure that last frame is always added as snapshot
+    if i+1 not in snapshots:
+        snapshots[i+1] = { 't': t, 'vehicles': current_vehicles }
 
     info = {
         't_min': first_t,
