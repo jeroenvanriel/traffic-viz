@@ -5,7 +5,7 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Scene from "../components/Scene";
 import CanvasRecorderPanel from "../gui/CanvasRecorderPanel";
 import CameraPanel from "../gui/CameraPanel";
-import SimulationPanel from "../gui/SimulationReplayPanel";
+import ReplayPanel from "../gui/ReplayPanel";
 
 import { useVehicleStore } from "../stores/VehicleStore";
 import { useReplayController } from "../stores/ReplayController";
@@ -49,7 +49,7 @@ export default function ScenePage() {
 
           <CanvasRecorderPanel />
           <CameraPanel />
-          <SimulationPanel />
+          <ReplayPanel />
           <BufferDebugList />
         </div>
       </div>

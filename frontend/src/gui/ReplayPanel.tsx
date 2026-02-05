@@ -1,6 +1,6 @@
 import { useReplayController } from "../stores/ReplayController";
 
-export default function SimulationReplayPanel() {
+export default function ReplayPanel() {
   const info = useReplayController((s) => s.info);
   const step = useReplayController((s) => s.step);
   const seek = useReplayController((s) => s.seek);
