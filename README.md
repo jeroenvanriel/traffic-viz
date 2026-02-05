@@ -5,7 +5,7 @@ _Backend_
 
 `mamba activate traffic-viz`
 
-`fastapi dev main`
+`fastapi dev app/main.py`
 
 _Frontend_
 
