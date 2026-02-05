@@ -21,20 +21,13 @@ export default function ScenePage() {
   if (!sceneId) return null;
 
   const load = useReplayController((s) => s.load);
-  const seek = useReplayController((s) => s.seek);
 
   useEffect(() => {
     // clear old data
     resetAllReplayStores();
 
     // load replay metadata
-    load(sceneId).then(() => {
-      const info = useReplayController.getState().info;
-      if (!info) return; // TODO: throw error
-      if (info.tMin !== null) {
-        seek(info.tMin); // go to very first snapshot
-      }
-    });
+    load(sceneId)
   }, [sceneId]);
 
   return (

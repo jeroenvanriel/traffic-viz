@@ -26,7 +26,7 @@ type ReplayController = {
   reset: () => void;
 
   load: (sceneId: string) => Promise<void>;
-  seek: (t: number) => Promise<void>;
+  seek: (step: number) => Promise<void>;
   fetchDeltas: () => Promise<void>;
   tick: (tDelta: number) => void;
 };
@@ -85,7 +85,7 @@ export const useReplayController = create<ReplayController>((set, get) => ({
     // find latest snapshot before current step
     const { snapshots } = get();
     let i = step;
-    while (i >= 0 && snapshots[i] === undefined) { i--; }
+    while (i > 0 && snapshots[i] === undefined) { i--; }
     const snapshot = snapshots[i];
 
     if (snapshot === undefined) {
