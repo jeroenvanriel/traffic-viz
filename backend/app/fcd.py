@@ -96,22 +96,21 @@ def precompute(frames_iterable, snapshot_interval=10.0):
 
 # only use sumo parser for now
 from .fcd_sumo import read_sumo_fcd
-get_frames_iterable = lambda scene_id: read_sumo_fcd(f'{SCENES_DIR}/{scene_id}/fcd.xml')
-
 
 @router.post("/load")
 def load_scene(scene_id: str, snapshot_interval: float = Query(10.0, gt=0)):
     """Load scene by precomputing snapshots and deltas."""
 
     # get floating car data
-    frames_iterable = get_frames_iterable(scene_id)
-    if frames_iterable is None:
+    path = Path(SCENES_DIR) / scene_id / 'fcd.xml'
+    if not path.is_file():
         raise HTTPException(404, "No floating car data found for this scene")
 
+    frames_iterable = read_sumo_fcd(path)
     info, snapshots, deltas = precompute(frames_iterable, snapshot_interval=snapshot_interval)
 
     # setup persistent file locations
-    base_dir = Path(f'{SCENES_DIR}/{scene_id}/preprocessed')
+    base_dir = Path(SCENES_DIR) / scene_id / 'preprocessed'
     base_dir.mkdir(parents=True, exist_ok=True)
     snapshots_path = base_dir / 'snapshots.json'
     deltas_path = base_dir / 'deltas.json'
