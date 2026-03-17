@@ -10,6 +10,13 @@ export default function CameraController() {
   const { camera } = useThree();
   const controls = useRef<any | null>(null);
 
+  // camera settings
+  useEffect(() => {
+      camera.near = 0.1;
+      camera.far = 10000;
+      camera.updateProjectionMatrix();
+    }, [camera]);
+
   // once on mount, store controls ref globally
   useEffect(() => {
     if (controls.current) {
