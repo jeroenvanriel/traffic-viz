@@ -77,3 +77,5 @@ jobs:
           asset_path: traffic-viz.zip
           asset_name: traffic-viz.zip
           asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
