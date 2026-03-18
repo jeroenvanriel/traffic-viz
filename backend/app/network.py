@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 import xml.etree.ElementTree as ET
-from shapely.geometry import LineString
-from shapely.ops import unary_union
+from shapely.geometry import LineString, Polygon
+from shapely import MultiPolygon
 
 from app.util import get_scene_root
 
@@ -12,32 +12,54 @@ async def get_road_network(scene_id: str):
     road_file = get_scene_root() / scene_id / "road.net.xml"
     tree = ET.parse(road_file)
     root = tree.getroot()
+    polygons = []
 
-    merged_roads = []
+    def parse_SUMO_coords(shape_str):
+        # NOTE: we need to flip y-coords for SUMO
+        points = [tuple(map(float, p.split(","))) for p in shape_str.split()]
+        return [(x, -y) for (x, y) in points]
 
     for edge in root.findall("edge"):
+        # no need to draw lanes within junctions
+        if edge.get("function") == "internal":
+            continue
+
         lanes = edge.findall("lane")
-        lane_shapes = []
         for lane in lanes:
             shape_str = lane.get("shape")
-            width = float(lane.get("width", 3.0))
-            points = [tuple(map(float, p.split(","))) for p in shape_str.split()]
+            points = parse_SUMO_coords(shape_str)
+            if len(points) == 0: # ignore invalid lines
+                continue
+            shape = LineString(points)
 
-            # NOTE: we need to flip y-coords (SUMO) in the bounds
-            points = [(x, -y) for (x, y) in points]
-
-            line = LineString(points)
             # buffer by half width to create polygon
-            polygon = line.buffer(width / 2, cap_style=2, join_style=2)
-            lane_shapes.append(polygon)
-        # merge all lanes of this edge
-        merged_roads.append(unary_union(lane_shapes))
+            width = float(lane.get("width", 3.0))
+            polygon = shape.buffer(width / 2, cap_style=1, join_style=1)
+            if not polygon.is_empty:
+                polygons.append(polygon)
 
-    all_polygons = unary_union(merged_roads)  # merge into single geometry
-    minx, miny, maxx, maxy = all_polygons.bounds
-    pad = 10 # add a little padding on the edges of the network
+    for junction in root.findall("junction"):
+        shape_str = junction.get("shape")
+        if shape_str is None:
+            continue
+        points = parse_SUMO_coords(shape_str)
+        if len(points) <= 2: # ignore invalid polygons
+            continue
+        shape = Polygon(points)
+        polygons.append(shape)
 
+    # compute bounds of all polygons together
+    minx, miny, maxx, maxy = MultiPolygon(polygons).bounds
+    pad = 10 # extra padding for the bounds
     return {
-        "polygons": [[dict(x=x, y=y) for x, y in p.exterior.coords] for p in merged_roads],
+        "polygons": [
+            {
+                "outer": [dict(x=x, y=y) for x, y in p.exterior.coords],
+                "holes": [
+                    [dict(x=x, y=y) for x, y in interior.coords]
+                    for interior in p.interiors
+                ],
+            }
+            for p in polygons],
         "bounds": dict(minx=minx - pad, miny=miny - pad, maxx=maxx + pad, maxy=maxy + pad),
     }
