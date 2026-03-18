@@ -41,7 +41,7 @@ async def serve_spa(full_path: str, request: Request):
 
 if __name__ == "__main__":
     # open frontend url in browser (after slight delay)
-    open_browser_later("http://127.0.0.1:8000")
+    open_browser_later("http://localhost:8000")
 
     # start backend server
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+    uvicorn.run(app, host="localhost", port=8000, log_level="info")
