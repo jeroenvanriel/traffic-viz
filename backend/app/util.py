@@ -25,7 +25,7 @@ def get_scene_root() -> Path:
     """
     if getattr(sys, "frozen", False):
         # running as PyInstaller executable
-        return Path(sys.executable).parent
+        return Path(sys.executable).parent / "scenes"
     else:
         # development mode
         return Path(__file__).parents[2] / "scenes"
