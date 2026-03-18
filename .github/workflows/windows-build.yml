@@ -1,12 +1,10 @@
 name: Build Windows EXE
 
 on:
-  # manual trigger from web interface
-  workflow_dispatch:
-  # build when tagging
+  workflow_dispatch: # manual trigger
   push:
     tags:
-      - "v*"
+      - "v*" # release trigger
 
 jobs:
   build-windows:
@@ -50,19 +48,28 @@ jobs:
         run: |
           powershell Compress-Archive -Path backend/dist/* -DestinationPath traffic-viz.zip
 
-      # --------------------------
-      # Artifact upload only on manual trigger
+      - name: Set output for downstream jobs
+        run: echo "zip-path=windows-exe.zip" >> $GITHUB_OUTPUT
+
+  # Artifact upload only on manual trigger
+  artifact-upload:
+    runs-on: windows-latest
+    needs: build
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    steps:
       - name: Upload artifact
-        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v5
         with:
           name: traffic-viz
-          path: traffic-viz.zip
+          path: ${{ needs.build.outputs.zip-path }}
 
-      # --------------------------
-      # Release only on tag push
+  # Release only on tag push
+  release:
+    runs-on: windows-latest
+    needs: build
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
+    steps:
       - name: Create GitHub Release
-        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
         id: create_release
         uses: actions/create-release@v1
         with:
@@ -74,10 +81,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload release asset
-        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: traffic-viz.zip
+          asset_path: ${{ needs.build.outputs.zip-path }}
           asset_name: traffic-viz.zip
           asset_content_type: application/zip
