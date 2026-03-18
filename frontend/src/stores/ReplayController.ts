@@ -13,6 +13,8 @@ type ReplayController = {
   info: ReplayInfo | null;
   step: number;
   time: number;
+  replaySpeed: number;
+  interpolationAlpha: number;
   isPlaying: boolean;
   snapshots: Partial<Snapshot[]>;
 
@@ -25,6 +27,9 @@ type ReplayController = {
   pause: () => void;
   reset: () => void;
 
+  setReplaySpeed: (replaySpeed: number) => void;
+  setInterpolationAlpha: (interpolationAlpha: number) => void;
+
   load: (sceneId: string) => Promise<void>;
   seek: (step: number) => Promise<void>;
   fetchDeltas: () => Promise<void>;
@@ -35,6 +40,8 @@ export const useReplayController = create<ReplayController>((set, get) => ({
   info: null,
   step: 0,
   time: 0,
+  replaySpeed: 1,
+  interpolationAlpha: 0.1,
   isPlaying: false,
   snapshots: [],
 
@@ -52,6 +59,9 @@ export const useReplayController = create<ReplayController>((set, get) => ({
     info: null, step: 0, time: 0, isPlaying: false, snapshots: [],
     deltaBuffer: [], deltaHead: 0, nextFetchStart: 0, isFetching: false,
   }),
+
+  setReplaySpeed: (replaySpeed: number) => set({ replaySpeed }),
+  setInterpolationAlpha: (interpolationAlpha: number) => set({ interpolationAlpha }),
 
   load: async (sceneId: string) => {
     const res_post = await fetch(`http://localhost:8000/api/scenes/${sceneId}/fcd/replay/load`, {
@@ -132,12 +142,12 @@ export const useReplayController = create<ReplayController>((set, get) => ({
   },
 
   tick: (tDelta) => {
-    const { time, isPlaying, info } = get();
+    const { time, replaySpeed, isPlaying, info } = get();
     if (!info || !isPlaying) return;
 
     // update time
     const prevTime = time;
-    const currentTime = prevTime + tDelta;
+    const currentTime = prevTime + tDelta * replaySpeed;
     set({ time: currentTime });
 
     const vehicleStore = useVehicleStore.getState();

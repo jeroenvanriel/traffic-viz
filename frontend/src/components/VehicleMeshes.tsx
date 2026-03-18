@@ -28,6 +28,8 @@ export default function VehicleMeshes() {
 
   const { tick } = useReplayController();
   const isPlaying = useReplayController((s) => s.isPlaying);
+  const replaySpeed = useReplayController((s) => s.replaySpeed);
+  const interpolationAlpha = useReplayController((s) => s.interpolationAlpha);
 
   // update vehicle positions every frame
   useFrame((_state, tDelta) => {
@@ -37,8 +39,8 @@ export default function VehicleMeshes() {
       // interpolate to target position/orientation
       const { pos, quat } = getTarget(v);
       if (isPlaying) {
-        mesh.position.lerp(pos, 0.1);
-        mesh.quaternion.slerp(quat, 0.1);
+        mesh.position.lerp(pos, interpolationAlpha * replaySpeed);
+        mesh.quaternion.slerp(quat, interpolationAlpha * replaySpeed);
       } else {
         mesh.position.copy(pos);
         mesh.quaternion.copy(quat);
