@@ -49,7 +49,7 @@ jobs:
           powershell Compress-Archive -Path backend/dist/* -DestinationPath traffic-viz.zip
 
       - name: Set output for downstream jobs
-        run: echo "zip-path=windows-exe.zip" >> $GITHUB_OUTPUT
+        run: echo "zip-path=traffic-viz.zip" >> $GITHUB_OUTPUT
 
   # Artifact upload only on manual trigger
   artifact-upload:
