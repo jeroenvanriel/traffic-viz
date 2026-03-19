@@ -9,7 +9,7 @@ router = APIRouter(prefix="/scenes/{scene_id}")
 
 @router.get("/road")
 async def get_road_network(scene_id: str):
-    road_file = get_root_folder() / scene_id / "road.net.xml"
+    road_file = get_root_folder() / "scenes" / scene_id / "road.net.xml"
     tree = ET.parse(road_file)
     root = tree.getroot()
     polygons = []
