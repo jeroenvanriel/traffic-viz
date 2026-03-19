@@ -3,13 +3,16 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from app.util import resource_path, get_scene_root, open_browser_later
+from app.util import resource_path, get_root_folder, open_browser_later
+import os
 
 # frontend files
 frontend_dir = resource_path("frontend/dist")
 index_file = frontend_dir / "index.html"
 
-SCENES_DIR = get_scene_root()
+SCENES_DIR = get_root_folder() / "scenes"
+os.makedirs(SCENES_DIR, exist_ok=True)
+
 app = FastAPI()
 
 # allow frontend access
@@ -22,8 +25,10 @@ async def list_scenes():
     return {"scenes": folders}
 
 # import routers
+import app.model as model
 import app.network as network
 import app.fcd as fcd
+app.include_router(model.router, prefix="/api")
 app.include_router(network.router, prefix="/api")
 app.include_router(fcd.router, prefix="/api")
 

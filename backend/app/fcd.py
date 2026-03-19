@@ -3,8 +3,8 @@ from pathlib import Path
 import math
 import json
 
-from app.util import get_scene_root
-SCENES_DIR = get_scene_root()
+from app.util import get_root_folder
+SCENES_DIR = get_root_folder()
 
 router = APIRouter(prefix='/scenes/{scene_id}/fcd/replay')
 

@@ -17,18 +17,18 @@ def resource_path(relative_path: str) -> Path:
         # development mode
         return Path(__file__).parents[2] / relative_path
 
-def get_scene_root() -> Path:
+def get_root_folder() -> Path:
     """
-    Determine the scene root folder depending on context:
-    - Bundled executable: same folder as the executable
-    - Development: relative to project root (scenes/)
+    Determine the root folder depending on context:
+    - Bundled executable: folder containing the executable
+    - Development: project root
     """
     if getattr(sys, "frozen", False):
         # running as PyInstaller executable
-        return Path(sys.executable).parent / "scenes"
+        return Path(sys.executable).parent
     else:
         # development mode
-        return Path(__file__).parents[2] / "scenes"
+        return Path(__file__).parents[2]
 
 def open_browser_later(url, delay=1.0):
     """Open the browser after a small delay."""

@@ -3,13 +3,13 @@ import xml.etree.ElementTree as ET
 from shapely.geometry import LineString, Polygon
 from shapely import MultiPolygon
 
-from app.util import get_scene_root
+from app.util import get_root_folder
 
 router = APIRouter(prefix="/scenes/{scene_id}")
 
 @router.get("/road")
 async def get_road_network(scene_id: str):
-    road_file = get_scene_root() / scene_id / "road.net.xml"
+    road_file = get_root_folder() / scene_id / "road.net.xml"
     tree = ET.parse(road_file)
     root = tree.getroot()
     polygons = []
