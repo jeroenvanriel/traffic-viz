@@ -17,6 +17,10 @@ __pycache__/
 # Preprocessed replay files
 preprocessed/
 
+# Application files
+models/
+scenes/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
