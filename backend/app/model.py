@@ -51,7 +51,3 @@ async def upload_model(file: UploadFile = File(...)):
 @router.get("/models")
 def list_models():
     return load_metadata()
-
-from fastapi.staticfiles import StaticFiles
-
-router.mount("/models", StaticFiles(directory=UPLOAD_DIR), name="models")

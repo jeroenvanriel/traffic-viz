@@ -35,6 +35,10 @@ app.include_router(fcd.router, prefix="/api")
 # static frontend assets
 app.mount("/assets", StaticFiles(directory=frontend_dir / "assets"), name="assets")
 
+# 3d model assets
+from app.model import UPLOAD_DIR 
+app.mount("/model-files", StaticFiles(directory=UPLOAD_DIR), name="model-files")
+
 # catch-all route for SPA routing
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str, request: Request):
