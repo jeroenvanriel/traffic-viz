@@ -4,7 +4,7 @@ import math
 import json
 
 from app.util import get_root_folder
-SCENES_DIR = get_root_folder()
+SCENES_DIR = get_root_folder() / "scenes"
 
 router = APIRouter(prefix='/scenes/{scene_id}/fcd/replay')
 
