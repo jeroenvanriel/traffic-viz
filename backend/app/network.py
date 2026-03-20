@@ -34,7 +34,7 @@ async def get_road_network(scene_id: str):
 
             # buffer by half width to create polygon
             width = float(lane.get("width", 3.0))
-            polygon = shape.buffer(width / 2, cap_style=1, join_style=1)
+            polygon = shape.buffer(width / 2, cap_style=2, join_style=2)
             if not polygon.is_empty:
                 polygons.append(polygon)
 
