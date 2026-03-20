@@ -48,7 +48,7 @@ def dicts_diff(before, after):
 
 
 def precompute(frames_iterable, snapshot_interval=10.0):
-    """Precompute snapshots and deltas for fcd playback.
+    """Precompute snapshots and deltas for fcd playback and compute unique vehicle types.
     Snapshots are taken every time at least `snapshot_interval` time has passed since the last frame.
     Hence, slightly irregular frame times are supported.
     The last frame is always added as snapshot.
@@ -66,6 +66,7 @@ def precompute(frames_iterable, snapshot_interval=10.0):
 
     prev_snapshot_time = first_t
     prev_vehicles = first_vehicles
+    vehicle_types = set(v['type'] for v in first_vehicles.values())
 
     # process the rest
     for i, frame in enumerate(frames_iterable):
@@ -78,6 +79,9 @@ def precompute(frames_iterable, snapshot_interval=10.0):
             snapshots[i+1] = { 't': t, 'vehicles': current_vehicles }
             prev_snapshot_time = t
 
+        # record vehicle types
+        vehicle_types.update(v['type'] for v in current_vehicles.values())
+
         prev_vehicles = current_vehicles
 
     # ensure that last frame is always added as snapshot
@@ -89,6 +93,7 @@ def precompute(frames_iterable, snapshot_interval=10.0):
         't_max': t,
         'n_steps': len(deltas.keys()),
         'snapshot_interval': snapshot_interval,
+        'vehicle_types': list(vehicle_types),
     }
     
     return info, snapshots, deltas

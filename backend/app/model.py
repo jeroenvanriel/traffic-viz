@@ -41,7 +41,8 @@ async def upload_model(file: UploadFile = File(...)):
     record = {
         "model_id": model_id,
         "original_filename": file.filename,
-        "stored_filename": file_name
+        "stored_filename": file_name,
+        "type": "" # user can configure this later
     }
     metadata.append(record)
     save_metadata(metadata)

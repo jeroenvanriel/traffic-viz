@@ -7,6 +7,7 @@ type ReplayInfo = {
   tMax: number;
   nSteps: number;
   snapshotInterval: number;
+  vehicleTypes: string[];
 };
 
 type ReplayController = {
@@ -80,6 +81,7 @@ export const useReplayController = create<ReplayController>((set, get) => ({
         tMax: res_json.info.t_max,
         nSteps: res_json.info.n_steps,
         snapshotInterval: res_json.info.snapshot_interval,
+        vehicleTypes: res_json.info.vehicle_types,
       },
       time: res_json.info.t_min,
       snapshots: res_json.snapshots

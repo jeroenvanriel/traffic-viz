@@ -23,7 +23,8 @@ def read_sumo_fcd(fcd_file):
                         'x': float(vehicle.attrib['x']),
                         'y': 0,
                         'z': -float(vehicle.attrib['y']),
-                        'r': -float(vehicle.attrib['angle']) / 180 * math.pi
+                        'r': -float(vehicle.attrib['angle']) / 180 * math.pi,
+                        'type': vehicle.attrib.get('type', 'default')
                     }
                     for vehicle in buffer
                 }
