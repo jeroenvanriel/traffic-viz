@@ -23,18 +23,39 @@ function getTarget(v: VehicleState) {
   return { pos: targetPos, quat: targetQuat };
 }
 
-type VehicleTypesResponse = Record<string, string>;
+type Vec3 = [number, number, number];
 
-function VehicleModel({ modelUrl }: { modelUrl: string }) {
+type TransformConfig = {
+  scale: Vec3;
+  rotation: Vec3;
+  offset: Vec3;
+};
+
+type VehicleTypeModel = {
+  url: string;
+  transform_config: TransformConfig;
+};
+
+type VehicleTypesResponse = Record<string, VehicleTypeModel>;
+
+function VehicleModel({ modelUrl, transformConfig }: { modelUrl: string; transformConfig: TransformConfig }) {
   const { scene } = useGLTF(modelUrl);
   const clonedScene = useMemo(() => scene.clone(true), [scene]);
-  return <primitive object={clonedScene} />;
+
+  return (
+    <primitive
+      object={clonedScene}
+      scale={transformConfig.scale}
+      rotation={transformConfig.rotation}
+      position={transformConfig.offset}
+    />
+  );
 }
 
 export default function VehicleMeshes() {
   const vehicles = useVehicleStore((s) => s.vehicles);
   const vehicleMeshRefs = useRef<Record<string, Object3D>>({});
-  const [modelUrlByType, setModelUrlByType] = useState<Record<string, string>>({});
+  const [modelByType, setModelByType] = useState<Record<string, VehicleTypeModel>>({});
 
   const { tick } = useReplayController();
   const isPlaying = useReplayController((s) => s.isPlaying);
@@ -42,6 +63,7 @@ export default function VehicleMeshes() {
   const interpolationAlpha = useReplayController((s) => s.interpolationAlpha);
   const info = useReplayController((s) => s.info);
 
+  // load vehicle type -> model mapping when scene changes
   useEffect(() => {
     let cancelled = false;
 
@@ -52,11 +74,11 @@ export default function VehicleMeshes() {
 
         const mapping: VehicleTypesResponse = await res.json();
         if (!cancelled) {
-          setModelUrlByType(mapping);
+          setModelByType(mapping);
         }
       } catch {
         if (!cancelled) {
-          setModelUrlByType({});
+          setModelByType({});
         }
       }
     }
@@ -68,16 +90,17 @@ export default function VehicleMeshes() {
     };
   }, [info?.sceneId]);
 
+  // preload GLTF models when vehicle types are loaded
   useEffect(() => {
     if (!info?.vehicleTypes?.length) return;
 
     info.vehicleTypes.forEach((vehicleType) => {
-      const modelUrl = modelUrlByType[vehicleType];
-      if (modelUrl) {
-        useGLTF.preload(modelUrl);
+      const modelEntry = modelByType[vehicleType];
+      if (modelEntry?.url) {
+        useGLTF.preload(modelEntry.url);
       }
     });
-  }, [info?.vehicleTypes, modelUrlByType]);
+  }, [info?.vehicleTypes, modelByType]);
 
   // update vehicle positions every frame
   useFrame((_state, tDelta) => {
@@ -100,30 +123,34 @@ export default function VehicleMeshes() {
 
   return (
     <>
-      {Object.values(vehicles ?? {}).map((v) => (
-        <group
-          key={v.id}
-          ref={(obj) => {
-            if (obj) { vehicleMeshRefs.current[v.id] = obj; }
-            else delete vehicleMeshRefs.current[v.id]; // clean up when unmounted
-          }}
-          onUpdate={(obj) => {
-            // set position/orientation once when the mesh is first created
-            const { pos, quat } = getTarget(v);
-            obj.position.copy(pos);
-            obj.quaternion.copy(quat);
-          }}
-        >
-          {modelUrlByType[v.type] ? (
-            <VehicleModel modelUrl={modelUrlByType[v.type]} />
-          ) : (
-            <mesh>
-              <boxGeometry args={[vehicleWidth, vehicleHeight, vehicleLength]} />
-              <meshStandardMaterial color="red" />
-            </mesh>
-          )}
-        </group>
-      ))}
+      {Object.values(vehicles ?? {}).map((v) => {
+        const modelEntry = modelByType[v.type];
+
+        return (
+          <group
+            key={v.id}
+            ref={(obj) => {
+              if (obj) { vehicleMeshRefs.current[v.id] = obj; }
+              else delete vehicleMeshRefs.current[v.id]; // clean up when unmounted
+            }}
+            onUpdate={(obj) => {
+              // set position/orientation once when the mesh is first created
+              const { pos, quat } = getTarget(v);
+              obj.position.copy(pos);
+              obj.quaternion.copy(quat);
+            }}
+          >
+            {modelEntry?.url ? (
+              <VehicleModel modelUrl={modelEntry.url} transformConfig={modelEntry.transform_config} />
+            ) : (
+              <mesh>
+                <boxGeometry args={[vehicleWidth, vehicleHeight, vehicleLength]} />
+                <meshStandardMaterial color="red" />
+              </mesh>
+            )}
+          </group>
+        );
+      })}
     </>
   );
 }
