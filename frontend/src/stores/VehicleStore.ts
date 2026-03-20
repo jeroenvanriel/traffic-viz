@@ -6,6 +6,7 @@ export type VehicleState = {
   y: number;
   z: number;
   r: number;
+  type: string;
 };
 
 export type Delta = {

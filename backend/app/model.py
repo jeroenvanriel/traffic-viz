@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 import uuid
 from app.util import get_root_folder
 import os
@@ -52,3 +52,20 @@ async def upload_model(file: UploadFile = File(...)):
 @router.get("/models")
 def list_models():
     return load_metadata()
+
+@router.get("/vehicle-types")
+def list_vehicle_types(request: Request):
+    """Return mapping from configured vehicle type names to model file URLs."""
+    metadata = load_metadata()
+    base_url = str(request.base_url).rstrip("/")
+
+    mapping = {}
+    for record in metadata:
+        vehicle_type = str(record.get("type", "")).strip()
+        stored_filename = record.get("stored_filename")
+        if not vehicle_type or not stored_filename:
+            continue
+
+        mapping[vehicle_type] = f"{base_url}/model-files/{stored_filename}"
+
+    return mapping
