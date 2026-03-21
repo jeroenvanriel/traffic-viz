@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { useGLTF, OrbitControls } from '@react-three/drei';
-import { DoubleSide, Group, Vector3 } from 'three';
+import { useGLTF, OrbitControls} from '@react-three/drei';
+import { DoubleSide, Group, MOUSE, Vector3, AxesHelper  } from 'three';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { getModelBoundingBoxInfo } from '../utils/modelUtils';
 
@@ -26,28 +26,28 @@ interface ModelInfo {
   thumbnail_url: string | null;
 }
 
-// Simple ground plane with road and directional arrow to indicate model orientation
+/** Simple ground plane with road and directional arrow to indicate model orientation */
 function Ground() {
   const size = 100;
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[size, size]} />
-        <meshStandardMaterial color="lightgreen" />
+        <meshStandardMaterial color="lightgreen" depthWrite={false} />
       </mesh>
 
-      {/* Road aligned with +Z, slightly above ground to avoid z-fighting */}
-      <mesh position={[0, -0.49, 0]}>
-        <boxGeometry args={[3, 0.02, 24]} />
-        <meshStandardMaterial color="#6b7280" />
+      {/* Road */}
+      <mesh position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[3.2, 100]} />
+        <meshStandardMaterial color="#6b7280" depthWrite={false} side={DoubleSide} />
       </mesh>
 
       {/* White direction arrow, indicating the model should face +Z */}
-      <mesh position={[0, -0.475, 1]}>
-        <boxGeometry args={[0.35, 0.03, 6]} />
-        <meshStandardMaterial color="#ffffff" />
+      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.35, 6]} />
+        <meshStandardMaterial color="#ffffff" side={DoubleSide} />
       </mesh>
-      <mesh position={[0, -0.473, 4.4]} rotation={[-Math.PI / 2, 0, -Math.PI / 2]}>
+      <mesh position={[0, 0, 3.474]} rotation={[-Math.PI / 2, 0, -Math.PI / 2]}>
         <circleGeometry args={[0.95, 3]} />
         <meshStandardMaterial color="#ffffff" side={DoubleSide} />
       </mesh>
@@ -55,6 +55,7 @@ function Ground() {
   );
 }
 
+/** Imported 3d model with transform controls */
 function ConfigModel({
   modelUrl,
   initialConfig,
@@ -163,7 +164,7 @@ function ConfigModel({
   );
 }
 
-// Scene wrapper component that manages TransformControls
+/** Scene wrapper component that manages TransformControls */
 function ConfigSceneContent({
   model,
   transformConfig,
@@ -191,8 +192,8 @@ function ConfigSceneContent({
 
     // Add the helper (visual gizmo) to the scene
     const helper = controls.getHelper();
+    helper.visible = false;
     scene.add(helper);
-    helper.visible = true;
 
     return () => {
       scene.remove(helper);
@@ -211,12 +212,13 @@ function ConfigSceneContent({
       controls.enabled = false;
       helper.visible = false;
       return;
+    } else {
+      controls.enabled = true;
+      helper.visible = true;
     }
 
-    controls.enabled = true;
-    helper.visible = true;
     controls.setMode(transformMode);
-  }, [transformMode]);
+  }, [transformMode, transformControlsRef.current]);
 
   return (
     <>
@@ -238,15 +240,15 @@ function ConfigSceneContent({
 
 interface ModelConfiguratorProps {
   model: ModelInfo;
-  onSave: () => void;
   onBackToLibrary: () => void;
 }
-export default function ModelConfigurator({ model, onSave, onBackToLibrary }: ModelConfiguratorProps) {
+export default function ModelConfigurator({ model, onBackToLibrary }: ModelConfiguratorProps) {
   const [transformConfig, setTransformConfig] = useState<TransformConfig>(model.transform_config);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [transformMode, setTransformMode] = useState<TransformMode>('translate');
+  const [transformMode, setTransformMode] = useState<TransformMode>(null);
 
+  // Keyboard shortcuts for mode switching and saving
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -276,6 +278,7 @@ export default function ModelConfigurator({ model, onSave, onBackToLibrary }: Mo
     };
   }, [handleSave]);
 
+  // Save updated transform config to backend and notify other tabs
   async function handleSave() {
     if (isSaving) return;
 
@@ -297,6 +300,7 @@ export default function ModelConfigurator({ model, onSave, onBackToLibrary }: Mo
         throw new Error('Failed to save model configuration');
       }
 
+      // Broadcast update to other tabs so they can refresh their model data if needed
       if (typeof BroadcastChannel !== 'undefined') {
         const channel = new BroadcastChannel('model-config-updates');
         channel.postMessage({
@@ -306,14 +310,15 @@ export default function ModelConfigurator({ model, onSave, onBackToLibrary }: Mo
         });
         channel.close();
       }
-
-      // Save only; do not leave the configurator view.
-      onSave();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function Axes({ size = 5 }) {
+    return <primitive object={new AxesHelper(size)} />
   }
 
   return (
@@ -326,10 +331,11 @@ export default function ModelConfigurator({ model, onSave, onBackToLibrary }: Mo
           onConfigChange={setTransformConfig}
           transformMode={transformMode}
         />
+        <Axes />
       </Canvas>
 
       {/* Floating Control Panel */}
-      <div className="absolute top-4 left-4 max-w-2xl mx-auto bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-4 backdrop-blur-sm">
+      <div className="absolute top-4 left-4 max-w-xl mx-auto bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-4 backdrop-blur-sm">
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">
             Configuring: {model.type || model.original_filename}

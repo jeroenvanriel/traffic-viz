@@ -5,19 +5,16 @@ import { useFrame } from '@react-three/fiber';
 import { useVehicleStore, type VehicleState } from '../stores/VehicleStore';
 import { useReplayController } from '../stores/ReplayController';
 
-const vehicleWidth = 1;
-const vehicleLength = 3;
-const vehicleHeight = 1;
-
 function getTarget(v: VehicleState) {
-  // target position/orientation (offset half vehicle height)
-  const targetPos = new Vector3(v.x, v.y + vehicleHeight / 2, v.z);
-  const targetQuat = new Quaternion().setFromEuler(new Euler(0, v.r, 0));
+  // target position/orientation
+  const targetPos = new Vector3(v.x, v.y, v.z);
+  // additional rotation of 180deg to make +Z axis the model's forward direction,
+  // necessary due to differences with SUMO's coordinate system
+  const targetQuat = new Quaternion().setFromEuler(new Euler(0, v.r + Math.PI, 0));
 
   // direction vector = vehicle forward direction
   const forward = new Vector3(0, 0, 1);
   forward.applyEuler(new Euler(0, v.r, 0));   // rotate forward vector
-  forward.multiplyScalar(vehicleLength / 2);  // (offset half vehicle length)
   targetPos.add(forward);
 
   return { pos: targetPos, quat: targetQuat };
@@ -173,7 +170,7 @@ export default function VehicleMeshes() {
               <VehicleModel modelUrl={modelEntry.url} transformConfig={modelEntry.transform_config} />
             ) : (
               <mesh>
-                <boxGeometry args={[vehicleWidth, vehicleHeight, vehicleLength]} />
+                <boxGeometry args={[1, 3, 1]} />
                 <meshStandardMaterial color="red" />
               </mesh>
             )}

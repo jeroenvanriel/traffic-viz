@@ -203,7 +203,7 @@ function ModelCard({ model, onDeleted, onTypePatched }: ModelCardProps) {
             </div>
             <button
               type="button"
-              className="opacity-0 group-hover:opacity-100 transition text-gray-500 hover:text-gray-700"
+              className="opacity-0 cursor-pointer group-hover:opacity-100 transition text-gray-500 hover:text-gray-700"
               onClick={() => setIsEditingType(true)}
               aria-label="Edit model type"
             >
@@ -221,7 +221,7 @@ function ModelCard({ model, onDeleted, onTypePatched }: ModelCardProps) {
           type="button"
           onClick={handleDelete}
           disabled={isDeleting}
-          className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-60"
+          className="cursor-pointer rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-60"
         >
           Delete model
         </button>

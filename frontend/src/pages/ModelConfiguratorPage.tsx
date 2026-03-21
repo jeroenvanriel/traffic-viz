@@ -77,7 +77,6 @@ export default function ModelConfiguratorPage() {
       <div className="flex-1">
         <ModelConfigurator
           model={model}
-          onSave={() => {}}
           onBackToLibrary={() => navigate('/models')}
         />
       </div>
