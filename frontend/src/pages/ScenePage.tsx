@@ -53,7 +53,7 @@ export default function ScenePage() {
       )}
 
       {/* Main Area */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-0 min-w-0">
         {/* Toggle Button */}
         <button
           onClick={() => setShowSidebar(!showSidebar)}
