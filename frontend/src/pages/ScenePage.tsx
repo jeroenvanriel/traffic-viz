@@ -10,7 +10,6 @@ import ReplayPanel from "../gui/ReplayPanel";
 
 import { useVehicleStore } from "../stores/VehicleStore";
 import { useReplayController } from "../stores/ReplayController";
-import BufferDebugList from "../gui/BufferDebugList";
 
 function resetAllReplayStores() {
   useVehicleStore.getState().reset();
@@ -47,7 +46,6 @@ export default function ScenePage() {
           <CanvasRecorderPanel />
           <CameraPanel />
           <ReplayPanel />
-          <BufferDebugList />
         </div>
       </div>
       )}
