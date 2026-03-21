@@ -54,7 +54,7 @@ export default function Home() {
                   >
                     <div className="w-full aspect-square mb-2 rounded overflow-hidden bg-gray-100 border border-gray-200">
                       <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
-                        No thumbnail
+                        No scene preview
                       </div>
                     </div>
 
