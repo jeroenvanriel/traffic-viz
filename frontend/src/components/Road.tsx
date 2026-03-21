@@ -41,10 +41,11 @@ function Ground({ bounds }: { bounds: Bounds }) {
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]} // rotate plane to lie flat
-      position={[(maxx + minx) / 2, -0.5, (maxy + miny) / 2]} // slightly lower than 0, to prevent depth issues
+      position={[(maxx + minx) / 2, 0, (maxy + miny) / 2]}
     >
       <planeGeometry args={[sizex, sizey]} />
-      <meshStandardMaterial color="lightgreen" />
+      {/* depthWrite={false} prevents z-fighting with road polygons */}
+      <meshStandardMaterial color="lightgreen" depthWrite={false} />
     </mesh>
   );
 }
