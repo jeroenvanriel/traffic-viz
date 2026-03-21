@@ -45,7 +45,6 @@ export default function ScenePage() {
 
           <CanvasRecorderPanel />
           <CameraPanel />
-          <ReplayPanel />
         </div>
       </div>
       )}
@@ -59,6 +58,9 @@ export default function ScenePage() {
         >
           {showSidebar ? <ChevronLeftIcon className="w-4 h-auto mr-1" /> : <ChevronRightIcon className="w-4 h-auto mr-1" />}
         </button>
+
+        {/* Replay Panel */}
+        <ReplayPanel />
 
         {/* Visualization */}
         <Scene sceneId={sceneId} />
