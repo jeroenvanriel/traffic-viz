@@ -2,7 +2,7 @@
 
 Interactive web-based visualization tool for replaying prerecorded traffic simulations, based on [SUMO network files](https://sumo.dlr.de/docs/Networks/SUMO_Road_Networks.html) and [SUMO floating car data](https://sumo.dlr.de/docs/Simulation/Output/FCDOutput.html).
 
-![Screenshot](./screenshot.png)
+![Screenshot](./screenshot1.png)
 
 
 ## ✨ Features
@@ -10,6 +10,7 @@ Interactive web-based visualization tool for replaying prerecorded traffic simul
 - Replay prerecorded vehicle movements directly in the browser
 - Programmable sequences of camera movement
 - Built-in screen recording for easy video capture
+- Import custom vehicle models with configurable dimension and reference point
 
 ## Getting started
 
@@ -28,6 +29,16 @@ After verifying that the simulation runs in `sumo-gui`, use the command `sumo -c
 
 > 💡 **Tip:** Instead of using the graphical [`netedit`](https://sumo.dlr.de/docs/Netedit/index.html) tool, you can also use the [osmWebWizard.py](https://sumo.dlr.de/docs/Tools/Import/OSM.html) script, included with SUMO, to easily create realistic traffic scenarios by importing map data from OpenStreetMap. For more information, see the [OpenStreetMap import documentation](https://sumo.dlr.de/docs/Networks/Import/OpenStreetMap.html).
 
+### Importing custom vehicle models
+
+In the Model Library tab of the sidebar, you can upload custom 3D models to be used as vehicle representations in the visualization.
+To use a custom model, rename the model to match the `type` attribute of the corresponding vehicle in the SUMO network file. For example, if a vehicle has `type="DEFAULT_VEHTYPE"`, you can name a model accordingly like in the screenshot below.
+
+![Custom vehicle model library](./screenshot3.png)
+
+Since models from different sources may have different dimensions and reference points, the Model Configurator allows you to adjust the scale and position of each model to ensure they are displayed correctly in the scene.
+
+![Model configurator interface](./screenshot2.png)
 
 ## Development
 
