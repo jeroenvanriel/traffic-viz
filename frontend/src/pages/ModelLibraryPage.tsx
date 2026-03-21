@@ -289,7 +289,22 @@ export default function ModelLibraryPage() {
     <div>
       <div className="flex justify-center mt-10 px-4">
         <div className="w-full max-w-4xl bg-white shadow-xl rounded-xl p-6 border border-gray-200">
-          <h1 className="font-bold text-xl mb-5 text-center">Model Library</h1>
+          <div className="mb-5 max-w-sm mx-auto w-full">
+            <div className="grid grid-cols-2 rounded-lg bg-gray-100 p-1">
+              <Link
+                to="/"
+                className="rounded-md px-3 py-2 text-center text-sm font-semibold text-gray-500 transition hover:text-gray-700"
+              >
+                Scene Overview
+              </Link>
+              <Link
+                to="/models"
+                className="rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm"
+              >
+                Model Library
+              </Link>
+            </div>
+          </div>
 
           <ModelList refreshKey={modelsRefreshKey} />
 

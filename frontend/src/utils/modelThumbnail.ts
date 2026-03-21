@@ -1,14 +1,13 @@
 import {
   AmbientLight,
-  Box3,
   Color,
   DirectionalLight,
   PerspectiveCamera,
   Scene,
-  Vector3,
   WebGLRenderer,
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { getModelBoundingBoxInfo } from "./modelUtils";
 
 
 /** Renders a GLTF model to a thumbnail image */
@@ -44,17 +43,14 @@ export async function renderModelThumbnail(modelUrl: string, size = 512): Promis
   scene.add(root);
 
   // compute bounding box to find center and size of model
-  const box = new Box3().setFromObject(root);
-  const center = box.getCenter(new Vector3());
-  const sizeVec = box.getSize(new Vector3());
-  const maxDim = Math.max(sizeVec.x, sizeVec.y, sizeVec.z, 1e-3);
+  const bbInfo = getModelBoundingBoxInfo(root);
 
   // center model at origin
-  root.position.sub(center);
+  root.position.sub(bbInfo.center);
 
   // position camera to fit model in view
   const fovRad = (camera.fov * Math.PI) / 180;
-  const distance = (maxDim / 2) / Math.tan(fovRad / 2);
+  const distance = (bbInfo.maxDimension / 2) / Math.tan(fovRad / 2);
   camera.position.set(distance * 0.95, distance * 0.75, distance * 0.95);
   camera.lookAt(0, 0, 0);
 

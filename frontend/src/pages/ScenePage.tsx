@@ -41,7 +41,7 @@ export default function ScenePage() {
         <div className="w-80 flex flex-col space-y-4">
           <Link to="/" className="mb-4 grey-link-button">
             <ArrowLeftIcon className="w-4 h-auto mr-2" />
-            Scene Overview
+            Home
           </Link>
 
           <CanvasRecorderPanel />

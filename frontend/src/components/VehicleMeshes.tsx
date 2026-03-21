@@ -63,9 +63,9 @@ export default function VehicleMeshes() {
   const interpolationAlpha = useReplayController((s) => s.interpolationAlpha);
   const info = useReplayController((s) => s.info);
 
-  // load vehicle type -> model mapping when scene changes
+  // load vehicle type -> model mapping and keep it synced across tabs
   useEffect(() => {
-    let cancelled = false;
+    let mounted = true;
 
     async function loadVehicleTypes() {
       try {
@@ -73,20 +73,49 @@ export default function VehicleMeshes() {
         if (!res.ok) return;
 
         const mapping: VehicleTypesResponse = await res.json();
-        if (!cancelled) {
+        if (mounted) {
           setModelByType(mapping);
         }
       } catch {
-        if (!cancelled) {
+        if (mounted) {
           setModelByType({});
         }
       }
     }
 
+    function handleModelUpdateBroadcast(event: MessageEvent) {
+      if (event.data?.type === 'model-transform-updated') {
+        loadVehicleTypes();
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        loadVehicleTypes();
+      }
+    }
+
+    function handleWindowFocus() {
+      loadVehicleTypes();
+    }
+
+    const channel =
+      typeof BroadcastChannel !== 'undefined'
+        ? new BroadcastChannel('model-config-updates')
+        : null;
+    channel?.addEventListener('message', handleModelUpdateBroadcast);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+
     loadVehicleTypes();
 
     return () => {
-      cancelled = true;
+      mounted = false;
+      channel?.removeEventListener('message', handleModelUpdateBroadcast);
+      channel?.close();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
     };
   }, [info?.sceneId]);
 
