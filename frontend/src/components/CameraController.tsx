@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { MapControls } from "@react-three/drei";
 import { useCameraStore } from "../stores/CameraStore";
 import { useKeyframeStore } from "../stores/KeyframeStore";
 import { Vector3 } from "three";
@@ -12,8 +12,8 @@ export default function CameraController() {
 
   // camera settings
   useEffect(() => {
-      camera.near = 0.1;
-      camera.far = 10000;
+      camera.near = 0.5;
+      camera.far = 100000;
       camera.updateProjectionMatrix();
     }, [camera]);
 
@@ -35,11 +35,23 @@ export default function CameraController() {
   const { currentSequence, currentIndex, isPlaying } = useCameraStore();
   const sequences = useKeyframeStore(s => s.sequences);
   const keyframes = sequences.find((s) => s.id === currentSequence)?.keyframes;
+  const minHeight = 0.5;
+
+  // Keep the camera from tilting below the horizon to avoid ground crossing and stuttery clamp behavior.
+  useEffect(() => {
+    if (!controls.current) return;
+
+    controls.current.maxPolarAngle = Math.PI / 2 - 0.05;
+    controls.current.minPolarAngle = 0;
+    controls.current.target.y = Math.max(controls.current.target.y, minHeight);
+  }, []);
 
   const timeRef = useRef(0);
   useFrame((_state, delta) => {
     if (!camera || !controls.current || !isPlaying || !keyframes || keyframes.length < 2) {
-      if (controls.current) controls.current.update();
+      if (controls.current) {
+        controls.current.update();
+      }
       return
     }
 
@@ -58,6 +70,7 @@ export default function CameraController() {
     camera.position.lerpVectors(from.position, to.position, t);
     camera.updateMatrix();
     const currentTarget = new Vector3().lerpVectors(from.target, to.target, t);
+    currentTarget.y = Math.max(currentTarget.y, minHeight);
     controls.current.target.copy(currentTarget);
     controls.current.update();
 
@@ -73,6 +86,6 @@ export default function CameraController() {
   });
 
   return (
-    <OrbitControls ref={controls} />
+    <MapControls ref={controls} />
   )
 }

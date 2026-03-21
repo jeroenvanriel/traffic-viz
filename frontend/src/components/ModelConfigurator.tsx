@@ -152,6 +152,12 @@ function ConfigModel({
       <OrbitControls
         ref={orbitControlsRef}
         makeDefault={false}
+        mouseButtons={{
+          /* Swap left/right mouse buttons to align with MapControls */
+          LEFT: MOUSE.PAN,
+          MIDDLE: MOUSE.DOLLY,
+          RIGHT: MOUSE.ROTATE,
+        }}
       />
     </>
   );
