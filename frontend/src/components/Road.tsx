@@ -1,5 +1,6 @@
 import * as three from "three";
 import { useEffect, useState } from "react";
+import { Line } from "@react-three/drei";
 
 export type Point = { x: number; y: number; z?: number };
 
@@ -14,12 +15,14 @@ export type Bounds = { minx: number, miny: number, maxx: number, maxy: number };
 
 export interface RoadData {
   polygons: Polygon[];
+  seams: Path[];
   bounds: Bounds;
 };
 
 function useRoadNetwork(sceneId?: string) {
   const [roadData, setRoadData] = useState<RoadData>({
     polygons: [],
+    seams: [],
     bounds: { minx: -50, miny: -50, maxx: 50, maxy: 50 },
   });
 
@@ -28,7 +31,7 @@ function useRoadNetwork(sceneId?: string) {
 
     fetch(`http://localhost:8000/api/scenes/${sceneId}/road`)
       .then(res => res.json())
-      .then(data => setRoadData({ polygons: data.polygons, bounds: data.bounds }));
+      .then(data => setRoadData({ polygons: data.polygons, seams: data.seams, bounds: data.bounds }));
   }, [sceneId]);
 
   return roadData;
@@ -96,6 +99,22 @@ function RoadPolygons({ polygons }: { polygons: Polygon[] }) {
   );
 }
 
+function SeamLines({ seams }: { seams: Path[] | null }) {
+  if (!seams) return null;
+
+  return (
+    <>
+      {seams.map((path, idx) => {
+        const points = path.map(p => new three.Vector3(p.x, 0.01, p.y)); // slight elevation to prevent z-fighting
+
+        return (
+          <Line key={idx} points={points} color="red" lineWidth={2} />
+        );
+      })}
+    </>
+  );
+}
+
 export default function Road({ sceneId }: { sceneId: string }) {
   // fetch road bounds and polygons for this scene
   const roadData = useRoadNetwork(sceneId);
@@ -104,6 +123,7 @@ export default function Road({ sceneId }: { sceneId: string }) {
     <>
       <Ground bounds={roadData.bounds} />
       <RoadPolygons polygons={roadData.polygons} />
+      <SeamLines seams={roadData.seams} />
     </>
   );
 }
