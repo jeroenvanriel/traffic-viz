@@ -32,8 +32,8 @@ jobs:
 
       - name: Install backend deps
         run: |
-          pip install -r backend/requirements.txt
-          pip install pyinstaller
+          python -m pip install --upgrade pip
+          python -m pip install '.\backend[build]'
 
       - name: Build backend EXE
         working-directory: backend
