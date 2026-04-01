@@ -1,6 +1,5 @@
 import * as three from "three";
 import { useEffect, useState } from "react";
-import { Line } from "@react-three/drei";
 
 export type Point = { x: number; y: number; z?: number };
 
@@ -15,14 +14,14 @@ export type Bounds = { minx: number, miny: number, maxx: number, maxy: number };
 
 export interface RoadData {
   polygons: Polygon[];
-  seams: Path[];
+  borders: Polygon[];
   bounds: Bounds;
 };
 
 function useRoadNetwork(sceneId?: string) {
   const [roadData, setRoadData] = useState<RoadData>({
     polygons: [],
-    seams: [],
+    borders: [],
     bounds: { minx: -50, miny: -50, maxx: 50, maxy: 50 },
   });
 
@@ -31,7 +30,7 @@ function useRoadNetwork(sceneId?: string) {
 
     fetch(`http://localhost:8000/api/scenes/${sceneId}/road`)
       .then(res => res.json())
-      .then(data => setRoadData({ polygons: data.polygons, seams: data.seams, bounds: data.bounds }));
+      .then(data => setRoadData({ polygons: data.polygons, borders: data.borders, bounds: data.bounds }));
   }, [sceneId]);
 
   return roadData;
@@ -99,16 +98,24 @@ function RoadPolygons({ polygons }: { polygons: Polygon[] }) {
   );
 }
 
-function SeamLines({ seams }: { seams: Path[] | null }) {
-  if (!seams) return null;
+function BorderPolygons({ borders }: { borders: Polygon[] | null }) {
+  if (!borders) return null;
 
   return (
     <>
-      {seams.map((path, idx) => {
-        const points = path.map(p => new three.Vector3(p.x, 0.01, p.y)); // slight elevation to prevent z-fighting
+      {borders.map((poly, idx) => {
+        const shape = polygonToShape(poly);
+        const geometry = new three.ShapeGeometry(shape);
 
         return (
-          <Line key={idx} points={points} color="red" lineWidth={2} />
+          <mesh
+            key={idx}
+            geometry={geometry}
+            rotation={[Math.PI / 2, 0, 0]}
+            position={[0, 0.01, 0]}
+          >
+            <meshStandardMaterial color="white" side={three.DoubleSide} />
+          </mesh>
         );
       })}
     </>
@@ -123,7 +130,7 @@ export default function Road({ sceneId }: { sceneId: string }) {
     <>
       <Ground bounds={roadData.bounds} />
       <RoadPolygons polygons={roadData.polygons} />
-      <SeamLines seams={roadData.seams} />
+      <BorderPolygons borders={roadData.borders} />
     </>
   );
 }
