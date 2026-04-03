@@ -26,7 +26,7 @@ async def list_scenes():
 
 # import routers
 import app.model as model
-import app.network as network
+import app.network.api as network
 import app.fcd as fcd
 app.include_router(model.router, prefix="/api")
 app.include_router(network.router, prefix="/api")

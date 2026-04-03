@@ -14,14 +14,14 @@ export type Bounds = { minx: number, miny: number, maxx: number, maxy: number };
 
 export interface RoadData {
   polygons: Polygon[];
-  borders: Polygon[];
+  markings: Polygon[];
   bounds: Bounds;
 };
 
 function useRoadNetwork(sceneId?: string) {
   const [roadData, setRoadData] = useState<RoadData>({
     polygons: [],
-    borders: [],
+    markings: [],
     bounds: { minx: -50, miny: -50, maxx: 50, maxy: 50 },
   });
 
@@ -30,7 +30,7 @@ function useRoadNetwork(sceneId?: string) {
 
     fetch(`http://localhost:8000/api/scenes/${sceneId}/road`)
       .then(res => res.json())
-      .then(data => setRoadData({ polygons: data.polygons, borders: data.borders, bounds: data.bounds }));
+      .then(data => setRoadData({ polygons: data.polygons, markings: data.markings, bounds: data.bounds }));
   }, [sceneId]);
 
   return roadData;
@@ -98,12 +98,12 @@ function RoadPolygons({ polygons }: { polygons: Polygon[] }) {
   );
 }
 
-function BorderPolygons({ borders }: { borders: Polygon[] | null }) {
-  if (!borders) return null;
+function MarkingPolygons({ markings }: { markings: Polygon[] | null }) {
+  if (!markings) return null;
 
   return (
     <>
-      {borders.map((poly, idx) => {
+      {markings.map((poly, idx) => {
         const shape = polygonToShape(poly);
         const geometry = new three.ShapeGeometry(shape);
 
@@ -130,7 +130,7 @@ export default function Road({ sceneId }: { sceneId: string }) {
     <>
       <Ground bounds={roadData.bounds} />
       <RoadPolygons polygons={roadData.polygons} />
-      <BorderPolygons borders={roadData.borders} />
+      <MarkingPolygons markings={roadData.markings} />
     </>
   );
 }
