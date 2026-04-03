@@ -202,12 +202,12 @@ export default function ReplayPanel() {
             </div>
 
             <div className="shrink-0 self-end ml-auto">
-              <label className="flex items-center gap-1 text-xs text-gray-700 select-none text-right">
+              <label className="flex items-center gap-1 text-xs text-gray-700 select-none text-right cursor-pointer">
                 <input
                   type="checkbox"
                   checked={autoHideEnabled}
                   onChange={(e) => setAutoHideEnabled(e.target.checked)}
-                  className="h-3.5 w-3.5"
+                  className="h-3.5 w-3.5 cursor-pointer"
                 />
                 Auto-hide panel
               </label>
