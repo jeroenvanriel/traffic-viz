@@ -1,4 +1,3 @@
-import CameraPlayback from "../gui/CameraPlayback";
 import CameraKeyframeManager from "../gui/CameraKeyframeManager";
 
 import { useCameraStore } from "../stores/CameraStore";
@@ -26,12 +25,41 @@ function SaveInitCameraButton() {
   );
 }
 
+function CameraPlaybackButton() {
+  const startAnimation = useCameraStore(s => s.startAnimation);
+  const stopAnimation = useCameraStore(s => s.stopAnimation);
+  const isPlaying = useCameraStore(s => s.isPlaying);
+
+  return (
+    <div>
+      <h4 className="my-2">Playback</h4>
+      {isPlaying ? (
+        <button
+          className="w-18 grey-button"
+          onClick={stopAnimation}
+          title="Stop the current camera animation."
+        >
+          Stop
+        </button>
+      ) : (
+        <button
+          className="w-18 grey-button"
+          onClick={startAnimation}
+          title="Start the current camera animation."
+        >
+          Start
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function CameraPanel() {
   return (
     <div>
       <h3 className="font-bold mb-2">Camera Manager</h3>
       <SaveInitCameraButton />
-      <CameraPlayback />
+      <CameraPlaybackButton />
       <CameraKeyframeManager />
     </div>
   );
