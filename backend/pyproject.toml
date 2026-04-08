@@ -17,6 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "fastapi[standard]==0.123.9",
     "jupyterlab>=4.0",
     "ipykernel>=6.0",
     "pyinstaller==6.18.0",

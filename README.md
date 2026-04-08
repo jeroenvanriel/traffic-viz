@@ -47,7 +47,7 @@ The Python backend is build using the FastAPI library. The frontend is written i
 ```bash
 # backend
 cd backend
-pip install -r requirements.txt
+pip install .[dev]
 fastapi dev app/main.py
 ```
 

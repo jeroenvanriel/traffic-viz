@@ -13,6 +13,7 @@ dist-ssr
 build
 *.local
 __pycache__/
+*.egg-info/
 
 # Preprocessed replay files
 preprocessed/
