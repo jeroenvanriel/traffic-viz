@@ -169,8 +169,8 @@ export default function VehicleMeshes() {
             {modelEntry?.url ? (
               <VehicleModel modelUrl={modelEntry.url} transformConfig={modelEntry.transform_config} />
             ) : (
-              <mesh>
-                <boxGeometry args={[1, 3, 1]} />
+              <mesh position={[0, 0.5, 0]} rotation={[0, 0, 0]}>
+                <boxGeometry args={[1.5, 1, 4]} />
                 <meshStandardMaterial color="red" />
               </mesh>
             )}
