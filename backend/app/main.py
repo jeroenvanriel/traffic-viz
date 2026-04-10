@@ -28,9 +28,13 @@ async def list_scenes():
 import app.model as model
 import app.network.api as network
 import app.fcd as fcd
+import app.camera_sequences as camera_sequences
+import app.scene_settings as scene_settings
 app.include_router(model.router, prefix="/api")
 app.include_router(network.router, prefix="/api")
 app.include_router(fcd.router, prefix="/api")
+app.include_router(camera_sequences.router, prefix="/api")
+app.include_router(scene_settings.router, prefix="/api")
 
 # static frontend assets
 app.mount("/assets", StaticFiles(directory=frontend_dir / "assets"), name="assets")

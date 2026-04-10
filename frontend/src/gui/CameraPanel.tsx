@@ -1,17 +1,18 @@
 import CameraKeyframeManager from "../gui/CameraKeyframeManager";
 
 import { useCameraStore } from "../stores/CameraStore";
-import { useKeyframeStore } from "../stores/KeyframeStore";
+import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
 
 function SaveInitCameraButton() {
   const camera = useCameraStore(s => s.camera);
   const controls = useCameraStore(s => s.controls);
-  const setInitKeyframe = useKeyframeStore(s => s.setInitKeyframe);
+  const setInitCameraState = useSceneSettingsStore(s => s.setInitCameraState);
 
   const handleSave = async () => {
     // update the store's camera settings
     if (!camera) return;
-    setInitKeyframe(camera.position.clone(), controls.target.clone());
+    if (!controls) return;
+    setInitCameraState(camera.position.clone(), controls.target.clone());
   };
 
   return (

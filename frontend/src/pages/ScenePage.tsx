@@ -10,6 +10,8 @@ import ReplayPanel from "../gui/ReplayPanel";
 
 import { useVehicleStore } from "../stores/VehicleStore";
 import { useReplayController } from "../stores/ReplayController";
+import { useKeyframeStore } from "../stores/KeyframeStore";
+import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
 
 function resetAllReplayStores() {
   useVehicleStore.getState().reset();
@@ -22,14 +24,18 @@ export default function ScenePage() {
 
   const [showSidebar, setShowSidebar] = useState(true);
   const load = useReplayController((s) => s.load);
+  const loadSequences = useKeyframeStore((s) => s.loadSequences);
+  const loadSceneSettings = useSceneSettingsStore((s) => s.loadSceneSettings);
 
   useEffect(() => {
     // clear old data
     resetAllReplayStores();
 
     // load replay metadata
-    load(sceneId)
-  }, [sceneId]);
+    void load(sceneId);
+    void loadSequences(sceneId);
+    void loadSceneSettings(sceneId);
+  }, [sceneId, load, loadSequences, loadSceneSettings]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">

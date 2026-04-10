@@ -3,6 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { MapControls } from "@react-three/drei";
 import { useCameraStore } from "../stores/CameraStore";
 import { useKeyframeStore } from "../stores/KeyframeStore";
+import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
 import { Vector3 } from "three";
 
 export default function CameraController() {
@@ -25,12 +26,12 @@ export default function CameraController() {
   }, []);
 
   // save global camera reference and set initial camera position
-  const initKeyframe = useKeyframeStore(s => s.initKeyframe);
+  const initCameraState = useSceneSettingsStore(s => s.initCameraState);
   useEffect(() => {
     setCameraRef(camera);
-    const { position, target } = initKeyframe;
+    const { position, target } = initCameraState;
     moveCamera(position, target);
-  }, [camera, initKeyframe])
+  }, [camera, initCameraState])
 
   const { currentSequence, currentIndex, isPlaying } = useCameraStore();
   const sequences = useKeyframeStore(s => s.sequences);

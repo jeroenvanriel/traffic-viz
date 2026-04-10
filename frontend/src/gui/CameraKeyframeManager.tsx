@@ -6,6 +6,7 @@ import { XMarkIcon, FolderPlusIcon, PlusCircleIcon } from "@heroicons/react/24/o
 
 type KeyframeRowProps = {
   keyframe: CameraKeyframe;
+  index: number;
   active?: boolean;
   onSelect: (kf: CameraKeyframe) => void;
   onDelete: (kf: CameraKeyframe) => void;
@@ -13,6 +14,7 @@ type KeyframeRowProps = {
 
 export function KeyframeRow({
   keyframe,
+  index,
   active = false,
   onSelect,
   onDelete,
@@ -28,7 +30,7 @@ export function KeyframeRow({
           ${active ? "bg-gray-500" : "bg-gray-700 hover:bg-gray-600"}
         `}
       >
-        <span>{keyframe.name}</span>
+        <span>{`Keyframe ${index + 1}`}</span>
       </button>
       <button
         onClick={() => onDelete(keyframe)}
@@ -89,7 +91,6 @@ export default function CameraKeyframeManager() {
     if (!camera || !controls) return;
     const keyframe = {
       id: nanoid(),
-      name: 'keyframe',
       position: camera.position.clone(),
       target: controls.target.clone(),
       duration: 1,
@@ -142,6 +143,7 @@ export default function CameraKeyframeManager() {
               <KeyframeRow
                   key={kf.id}
                   keyframe={kf}
+                  index={idx}
                   active={idx === currentIndex}
                   onSelect={(kf) => handleApplyKeyframe(kf.id)}
                   onDelete={(kf) => removeKeyframe(selectedSequence.id, kf.id)}
