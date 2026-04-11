@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+type SceneInfo = {
+  scene_id: string;
+  thumbnail_url: string;
+};
+
 export default function Home() {
-  const [scenes, setscenes] = useState<string[]>([]);
+  const [scenes, setScenes] = useState<SceneInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -10,7 +15,7 @@ export default function Home() {
     fetch("http://localhost:8000/api/scenes")
       .then((res) => res.json())
       .then((data) => {
-        setscenes(data.scenes);
+        setScenes(data.scenes);
         setLoading(false);
       })
       .catch((err) => {
@@ -46,19 +51,22 @@ export default function Home() {
 
           {!loading && !error && (
             <ul className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {scenes.map((name) => (
-                <li key={name}>
+              {scenes.map((scene) => (
+                <li key={scene.scene_id}>
                   <Link
-                    to={`/scene/${name}`}
+                    to={`/scene/${scene.scene_id}`}
                     className="block rounded-lg p-3 border bg-gray-50 border-gray-200 transition hover:bg-gray-100"
                   >
                     <div className="w-full aspect-square mb-2 rounded overflow-hidden bg-gray-100 border border-gray-200">
-                      <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
-                        No scene preview
-                      </div>
+                      <img
+                        src={scene.thumbnail_url}
+                        alt={scene.scene_id}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
                     </div>
 
-                    <div className="text-sm font-semibold truncate text-gray-900">{name}</div>
+                    <div className="text-sm font-semibold truncate text-gray-900">{scene.scene_id}</div>
                   </Link>
                 </li>
               ))}
