@@ -15,12 +15,12 @@ type InitialCameraStatePayload = {
 };
 
 type SceneSettingsPayload = {
-  initCameraState: InitialCameraStatePayload;
+  initCameraState: InitialCameraStatePayload | null;
 };
 
 type SceneSettingsStore = {
   currentSceneId: string | null;
-  initCameraState: InitialCameraState;
+  initCameraState: InitialCameraState | null;
 
   loadSceneSettings: (sceneId: string) => Promise<void>;
   setInitCameraState: (position: Vector3, target: Vector3) => void;
@@ -34,23 +34,27 @@ function payloadToVector(v: Vec3Payload): Vector3 {
   return new Vector3(v.x, v.y, v.z);
 }
 
-function toPayload(settings: InitialCameraState): SceneSettingsPayload {
+function toPayload(settings: InitialCameraState | null): SceneSettingsPayload {
   return {
-    initCameraState: {
-      position: vectorToPayload(settings.position),
-      target: vectorToPayload(settings.target),
-    },
+    initCameraState: settings
+      ? {
+        position: vectorToPayload(settings.position),
+        target: vectorToPayload(settings.target),
+      }
+      : null,
   };
 }
 
-function fromPayload(payload: SceneSettingsPayload): InitialCameraState {
+function fromPayload(payload: SceneSettingsPayload): InitialCameraState | null {
+  if (!payload.initCameraState) return null;
+
   return {
     position: payloadToVector(payload.initCameraState.position),
     target: payloadToVector(payload.initCameraState.target),
   };
 }
 
-async function saveSceneSettings(sceneId: string, initCameraState: InitialCameraState): Promise<void> {
+async function saveSceneSettings(sceneId: string, initCameraState: InitialCameraState | null): Promise<void> {
   const response = await fetch(`http://localhost:8000/api/scenes/${sceneId}/settings`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -65,10 +69,7 @@ async function saveSceneSettings(sceneId: string, initCameraState: InitialCamera
 export const useSceneSettingsStore = create<SceneSettingsStore>()(
   immer((set, get) => ({
     currentSceneId: null,
-    initCameraState: {
-      position: new Vector3(-10, 10, -10),
-      target: new Vector3(),
-    },
+    initCameraState: null,
 
     loadSceneSettings: async (sceneId) => {
       const response = await fetch(`http://localhost:8000/api/scenes/${sceneId}/settings`);

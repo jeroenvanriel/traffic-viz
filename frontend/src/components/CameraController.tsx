@@ -4,12 +4,27 @@ import { MapControls } from "@react-three/drei";
 import { useCameraStore } from "../stores/CameraStore";
 import { useKeyframeStore } from "../stores/KeyframeStore";
 import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
-import { Vector3 } from "three";
+import { PerspectiveCamera, Vector3 } from "three";
+import type { Bounds } from "./Road";
 
-export default function CameraController() {
+function computeCornerView(bounds: Bounds, fovDeg: number): { position: Vector3; target: Vector3 } {
+  const centerX = (bounds.minx + bounds.maxx) / 2;
+  const centerZ = (bounds.miny + bounds.maxy) / 2;
+  const maxDimension = Math.max(bounds.maxx - bounds.minx, bounds.maxy - bounds.miny);
+  const fovRad = (fovDeg * Math.PI) / 180;
+  const distance = ((maxDimension / 2) / Math.tan(fovRad / 2)) * 1.35;
+
+  return {
+    position: new Vector3(centerX - distance * 0.9, Math.max(distance * 0.85, 18), centerZ - distance * 0.9),
+    target: new Vector3(centerX, 0, centerZ),
+  };
+}
+
+export default function CameraController({ roadBounds }: { roadBounds: Bounds | null }) {
   const { setCameraRef, setControlsRef, moveCamera, setCurrentIndex } = useCameraStore();
   const { camera } = useThree();
   const controls = useRef<any | null>(null);
+  const autoInitAttemptedRef = useRef(false);
 
   // camera settings
   useEffect(() => {
@@ -29,9 +44,35 @@ export default function CameraController() {
   const initCameraState = useSceneSettingsStore(s => s.initCameraState);
   useEffect(() => {
     setCameraRef(camera);
+    if (!initCameraState) return;
     const { position, target } = initCameraState;
     moveCamera(position, target);
   }, [camera, initCameraState])
+
+  const currentSceneId = useSceneSettingsStore((s) => s.currentSceneId);
+  const setInitCameraState = useSceneSettingsStore((s) => s.setInitCameraState);
+
+  useEffect(() => {
+    autoInitAttemptedRef.current = false;
+  }, [currentSceneId]);
+
+  // If no user initial camera exists yet, compute a corner view that frames the whole road plane and persist it.
+  useEffect(() => {
+    if (!camera || !currentSceneId || !roadBounds || initCameraState || autoInitAttemptedRef.current) return;
+    autoInitAttemptedRef.current = true;
+
+    const bootstrapInitialCamera = async () => {
+      const fov = camera instanceof PerspectiveCamera ? camera.fov : 60;
+      const { position, target } = computeCornerView(roadBounds, fov);
+      setInitCameraState(position, target);
+      moveCamera(position, target);
+    };
+
+    void bootstrapInitialCamera().catch((err) => {
+      autoInitAttemptedRef.current = false;
+      console.error("Failed to auto-compute initial camera", err);
+    });
+  }, [camera, currentSceneId, roadBounds, initCameraState, moveCamera, setInitCameraState]);
 
   const { currentSequence, currentIndex, isPlaying } = useCameraStore();
   const sequences = useKeyframeStore(s => s.sequences);

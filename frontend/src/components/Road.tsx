@@ -1,5 +1,4 @@
 import * as three from "three";
-import { useEffect, useState } from "react";
 
 export type Point = { x: number; y: number; z?: number };
 
@@ -17,24 +16,6 @@ export interface RoadData {
   markings: Polygon[];
   bounds: Bounds;
 };
-
-function useRoadNetwork(sceneId?: string) {
-  const [roadData, setRoadData] = useState<RoadData>({
-    polygons: [],
-    markings: [],
-    bounds: { minx: -50, miny: -50, maxx: 50, maxy: 50 },
-  });
-
-  useEffect(() => {
-    if (!sceneId) return;
-
-    fetch(`http://localhost:8000/api/scenes/${sceneId}/road`)
-      .then(res => res.json())
-      .then(data => setRoadData({ polygons: data.polygons, markings: data.markings, bounds: data.bounds }));
-  }, [sceneId]);
-
-  return roadData;
-}
 
 function Ground({ bounds }: { bounds: Bounds }) {
   const { minx, miny, maxx, maxy } = bounds;
@@ -122,10 +103,7 @@ function MarkingPolygons({ markings }: { markings: Polygon[] | null }) {
   );
 }
 
-export default function Road({ sceneId }: { sceneId: string }) {
-  // fetch road bounds and polygons for this scene
-  const roadData = useRoadNetwork(sceneId);
-
+export default function Road({ roadData }: { roadData: RoadData }) {
   return (
     <>
       <Ground bounds={roadData.bounds} />

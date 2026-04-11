@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -21,16 +22,11 @@ class InitialCameraStatePayload(BaseModel):
 
 
 class SceneSettingsPayload(BaseModel):
-    initCameraState: InitialCameraStatePayload
+    initCameraState: Optional[InitialCameraStatePayload] = None
 
 
 def _default_scene_settings() -> SceneSettingsPayload:
-    return SceneSettingsPayload(
-        initCameraState=InitialCameraStatePayload(
-            position=Vec3Payload(x=-10.0, y=10.0, z=-10.0),
-            target=Vec3Payload(x=0.0, y=0.0, z=0.0),
-        )
-    )
+    return SceneSettingsPayload(initCameraState=None)
 
 
 def _get_scene_dir(scene_id: str) -> Path:

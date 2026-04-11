@@ -1,10 +1,10 @@
 #+title: Feature planning
 
 * camera
-** TODO scene-specific initial camera
-** TODO save keyframes per scene to the backend
 ** TODO scene finder
 Compute a camera position that is guaranteed to show a part of the scene.
+** DONE scene-specific initial camera
+** DONE save keyframes per scene to the backend
 ** DONE implement MapControls
 The target of the camera should always stay on the horizontal plane (or slightly above it).
 ** DONE rescaling of 3d canvas after window resize
@@ -24,7 +24,7 @@ junction type
 are stored. The file that Marko sent has closed paths, which upon inspection
 should probably have been not closed, like they are when I download the same OSM
 data myself.
-** TODO generate road line markings
+** DONE generate road line markings
 Similar to what we did before with ClipperJS.
 ** DONE avoid depth issue
 maybe set road a little bit higher, depending on scale?
@@ -37,13 +37,6 @@ Keep a "library" of models with "tags" that can be used in fcd files.
 Automatically find the orienation of the model based on the bounding box and the intended width/length.
 ** TODO manually set width/length
 With "lock ratio" checkbox.
-** DONE first iteration
-/ChatGPT prompt/:
-Help me design the next feature of my 3d traffic visualization project. I want the user to be able to upload their own 3d car models (as a .glb file for example). What I have in mind is that after uploading the model itself, the user can do some minor tweaks if necessary: 1. scaling of  the model 2. orientation of the model 3. reference point of the model 4. custom coloring properties and maybe other cosmetics later on. The idea is that there is a separate "model configuration component", where the user also sees some artificial test scenario where a continuous stream of copies of the vehicle are driving through some network, or keep turning at the same intersection (this helps the user while setting the reference point). 
-
-Help me with the following:
-- How to do the actual uploading? I have a FastAPI backend and the frontend is built using React and three.js for the 3d rendering. Provide the code for the api endpoint and some skeleton for the uploading code in the react component.
-- Can you provide some skeleton for the frontend component, with a sidebar containing sliders for the 4 categories listed above?
 ** IDEA test scene in model configurator
 Currently, the user can open a new tab/window with a simulation to assist in
 configuring the orienation of a 3d model. Alternatively, we could have a live
@@ -54,8 +47,16 @@ testing scene:
   such that the user cannot accidentally remove it.
 - For this network, store prerecorded fcd.xml for a single vehicle. We can then
   in the frontend duplicate (with different phase) these movements for multiple vehicles.
+** DONE first iteration
+/ChatGPT prompt/:
+Help me design the next feature of my 3d traffic visualization project. I want the user to be able to upload their own 3d car models (as a .glb file for example). What I have in mind is that after uploading the model itself, the user can do some minor tweaks if necessary: 1. scaling of  the model 2. orientation of the model 3. reference point of the model 4. custom coloring properties and maybe other cosmetics later on. The idea is that there is a separate "model configuration component", where the user also sees some artificial test scenario where a continuous stream of copies of the vehicle are driving through some network, or keep turning at the same intersection (this helps the user while setting the reference point). 
+
+Help me with the following:
+- How to do the actual uploading? I have a FastAPI backend and the frontend is built using React and three.js for the 3d rendering. Provide the code for the api endpoint and some skeleton for the uploading code in the react component.
+- Can you provide some skeleton for the frontend component, with a sidebar containing sliders for the 4 categories listed above?
 * TODO hidden debuging tools
 ** deltas inspector
 List of current deltas in memory.
 * IDEA online map
 Use Leaflet or OSM to show a real map, instead of only the extracted SUMO netedit network.
+
