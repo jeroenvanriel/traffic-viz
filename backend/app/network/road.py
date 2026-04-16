@@ -90,9 +90,10 @@ def compute_lane_markings(lane_records):
 
 
 def compute_edge_markings(road_polygons, union_buffer=0.1):
-    # compute union of all polygons (lanes + junctions) and
-    # buffer slightly to account for nearly-touching polygons
-    union = unary_union(road_polygons).buffer(union_buffer)
+    # Compute union of all polygons (lanes + junctions) and
+    # buffer slightly to account for nearly-touching polygons.
+    # NOTE: we filter out invalid polygons before union, as these can cause the union operation to fail.
+    union = unary_union([poly for poly in road_polygons if poly.is_valid]).buffer(union_buffer)
     markings = []
 
     # create true-width edge marking by buffering the network boundary curves.
