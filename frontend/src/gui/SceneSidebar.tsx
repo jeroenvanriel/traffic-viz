@@ -194,7 +194,7 @@ export default function SceneSidebar({
             <span className="text-xs font-semibold text-gray-400 mr-1">{sceneId}</span>
           </div>
 
-          <div className="border-b border-gray-200 bg-gray-100 px-4 py-3">
+          <div className="border-b border-gray-200 bg-gray-100 px-4">
             <div className="grid grid-cols-3 rounded-lg bg-gray-100 p-1">
               <TabButton
                 active={activeTab === "playback"}
