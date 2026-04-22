@@ -9,13 +9,8 @@ type CameraStore = {
 
   moveCamera: (pos: three.Vector3, target: three.Vector3) => void;
   
-  currentSequence: string;
-  setCurrentSequence: (next: string) => void;
-  currentIndex: number;
-  setCurrentIndex: (next: number) => void;
-  isPlaying: boolean;
-  startAnimation: () => void;
-  stopAnimation: () => void;
+  currentSequence: string | null;
+  setCurrentSequence: (next: string | null) => void;
 };
 
 export const useCameraStore = create<CameraStore>((set, get) => ({
@@ -41,13 +36,6 @@ export const useCameraStore = create<CameraStore>((set, get) => ({
   },
 
   // camera animation
-  currentSequence: '',
+  currentSequence: null,
   setCurrentSequence: (next) => set({ currentSequence: next }),
-  currentIndex: 0,
-  setCurrentIndex: (next) => {
-    set({ currentIndex: next })
-  },
-  isPlaying: false,
-  startAnimation: () => set({ isPlaying: true, currentIndex: 0 }),
-  stopAnimation: () => set({ isPlaying: false }),
 }));

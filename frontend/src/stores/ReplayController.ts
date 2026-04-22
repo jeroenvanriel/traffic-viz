@@ -94,9 +94,14 @@ export const useReplayController = create<ReplayController>((set, get) => ({
   seek: async (step) => {
     set({ isPlaying: false });
 
+    const { info, snapshots } = get();
+    if (!info) return;
+
+    const maxStepIndex = info.nSteps - 1;
+    const clampedStep = Math.min(Math.max(Math.round(step), 0), maxStepIndex);
+
     // find latest snapshot before current step
-    const { snapshots } = get();
-    let i = step;
+    let i = clampedStep;
     while (i > 0 && snapshots[i] === undefined) { i--; }
     const snapshot = snapshots[i];
 
@@ -120,7 +125,8 @@ export const useReplayController = create<ReplayController>((set, get) => ({
     // auto-prefetch when buffer runs low and there are still unfetched deltas
     const REFETCH_THRESHOLD = 50;
     const bufferLength = deltaBuffer.length - deltaHead;
-    const bufferDone = step + bufferLength >= info.nSteps;
+    const maxStepIndex = info.nSteps - 1;
+    const bufferDone = step + bufferLength >= maxStepIndex;
     if (bufferDone || bufferLength > REFETCH_THRESHOLD) {
       return // no need to fetch additional deltas
     }
@@ -175,7 +181,7 @@ export const useReplayController = create<ReplayController>((set, get) => ({
     get().fetchDeltas();
 
     // check if done
-    if (get().step >= info.nSteps) {
+    if (get().step >= info.nSteps - 1) {
       set({ isPlaying: false });
     }
   },

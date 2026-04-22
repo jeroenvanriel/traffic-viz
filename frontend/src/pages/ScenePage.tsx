@@ -1,12 +1,11 @@
-import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 
 import Scene from "../components/Scene";
-import CanvasRecorderPanel from "../gui/CanvasRecorderPanel";
-import CameraPanel from "../gui/CameraPanel";
-import ReplayPanel from "../gui/ReplayPanel";
+import SceneSidebar from "../gui/SceneSidebar.tsx";
+import CanvasRecorderController from "../gui/CanvasRecorderController";
+import ReplayPanel from "../gui/ReplayPanel.tsx";
+import { useCameraTimelineEditor } from "../gui/CameraTimelineEditor";
 
 import { useVehicleStore } from "../stores/VehicleStore";
 import { useReplayController } from "../stores/ReplayController";
@@ -21,11 +20,17 @@ function resetAllReplayStores() {
 export default function ScenePage() {
   const { sceneId } = useParams();
   if (!sceneId) return null;
-
-  const [showSidebar, setShowSidebar] = useState(true);
   const load = useReplayController((s) => s.load);
+  const info = useReplayController((s) => s.info);
   const loadSequences = useKeyframeStore((s) => s.loadSequences);
   const loadSceneSettings = useSceneSettingsStore((s) => s.loadSceneSettings);
+  const timelineRef = useRef<SVGSVGElement | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
+  const isMapInteractingRef = useRef(false);
+  const [autoHideEnabled, setAutoHideEnabled] = useState(false);
+  const [isUiVisible, setIsUiVisible] = useState(true);
+  const replayMaxStep = info ? info.nSteps - 1 : 0;
+  const cameraTimeline = useCameraTimelineEditor(replayMaxStep, timelineRef);
 
   useEffect(() => {
     // clear old data
@@ -37,41 +42,87 @@ export default function ScenePage() {
     void loadSceneSettings(sceneId);
   }, [sceneId, load, loadSequences, loadSceneSettings]);
 
+  useEffect(() => {
+    const clearHideTimer = () => {
+      if (hideTimerRef.current !== null) {
+        window.clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+    };
+
+    const scheduleHide = () => {
+      clearHideTimer();
+      hideTimerRef.current = window.setTimeout(() => {
+        setIsUiVisible(false);
+      }, 20);
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (isMapInteractingRef.current) {
+        return;
+      }
+
+      const isInSidebarRevealZone = event.clientX <= 384;
+      const isInTimelineRevealZone = window.innerHeight - event.clientY <= 120;
+      if (isInSidebarRevealZone || isInTimelineRevealZone) {
+        setIsUiVisible(true);
+        clearHideTimer();
+      } else {
+        scheduleHide();
+      }
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      const isCanvasTarget = target instanceof Element && target.closest("canvas");
+      if (isCanvasTarget) {
+        isMapInteractingRef.current = true;
+      }
+    };
+
+    const handlePointerUp = () => {
+      isMapInteractingRef.current = false;
+    };
+
+    if (!autoHideEnabled) {
+      clearHideTimer();
+      setIsUiVisible(true);
+      return;
+    }
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+
+    return () => {
+      clearHideTimer();
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+    };
+  }, [autoHideEnabled]);
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+    <div className="relative h-screen w-screen overflow-hidden">
+      <CanvasRecorderController />
+      <SceneSidebar
+        sceneId={sceneId}
+        cameraTimeline={cameraTimeline}
+        autoHideEnabled={autoHideEnabled}
+        onAutoHideEnabledChange={setAutoHideEnabled}
+        isVisible={isUiVisible}
+      />
 
-      {/* Sidebar */}
-      {showSidebar && (
-      <div className="p-5 bg-gray-800 text-white">
-        <div className="w-80 flex flex-col space-y-4">
-          <Link to="/" className="mb-4 grey-link-button">
-            <ArrowLeftIcon className="w-4 h-auto mr-2" />
-            Home
-          </Link>
-
-          <CanvasRecorderPanel />
-          <CameraPanel />
-        </div>
-      </div>
-      )}
-
-      {/* Main Area */}
-      <div className="flex-1 relative min-h-0 min-w-0">
-        {/* Toggle Button */}
-        <button
-          onClick={() => setShowSidebar(!showSidebar)}
-          className="absolute top-4 z-10 text-white bg-gray-800 p-2 rounded-tr-lg rounded-br-lg cursor-pointer"
-        >
-          {showSidebar ? <ChevronLeftIcon className="w-4 h-auto mr-1" /> : <ChevronRightIcon className="w-4 h-auto mr-1" />}
-        </button>
-
-        {/* Replay Panel */}
-        <ReplayPanel />
-
-        {/* Visualization */}
+      <div className="relative h-full w-full min-h-0 min-w-0">
+        <ReplayPanel
+          cameraTimeline={cameraTimeline}
+          timelineRef={timelineRef}
+          isVisible={isUiVisible}
+        />
         <Scene sceneId={sceneId} />
       </div>
-
     </div>
   )
 }

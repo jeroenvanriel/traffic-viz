@@ -17,7 +17,7 @@ class CameraKeyframePayload(BaseModel):
     id: str
     position: Vec3Payload
     target: Vec3Payload
-    duration: float
+    step: int
 
 class CameraSequencePayload(BaseModel):
     id: str

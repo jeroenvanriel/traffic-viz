@@ -2,10 +2,13 @@ import { useRef, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { MapControls } from "@react-three/drei";
 import { useCameraStore } from "../stores/CameraStore";
-import { useKeyframeStore } from "../stores/KeyframeStore";
+import { type CameraKeyframe, useKeyframeStore } from "../stores/KeyframeStore";
+import { useReplayController } from "../stores/ReplayController";
 import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
-import { PerspectiveCamera, Vector3 } from "three";
+import { MathUtils, PerspectiveCamera, Vector3 } from "three";
 import type { Bounds } from "./Road";
+
+const CAMERA_STEP_LERP_ALPHA = 0.2;
 
 function computeCornerView(bounds: Bounds, fovDeg: number): { position: Vector3; target: Vector3 } {
   const centerX = (bounds.minx + bounds.maxx) / 2;
@@ -21,7 +24,7 @@ function computeCornerView(bounds: Bounds, fovDeg: number): { position: Vector3;
 }
 
 export default function CameraController({ roadBounds }: { roadBounds: Bounds | null }) {
-  const { setCameraRef, setControlsRef, moveCamera, setCurrentIndex } = useCameraStore();
+  const { setCameraRef, setControlsRef, moveCamera, currentSequence } = useCameraStore();
   const { camera } = useThree();
   const controls = useRef<any | null>(null);
   const autoInitAttemptedRef = useRef(false);
@@ -74,9 +77,14 @@ export default function CameraController({ roadBounds }: { roadBounds: Bounds | 
     });
   }, [camera, currentSceneId, roadBounds, initCameraState, moveCamera, setInitCameraState]);
 
-  const { currentSequence, currentIndex, isPlaying } = useCameraStore();
   const sequences = useKeyframeStore(s => s.sequences);
-  const keyframes = sequences.find((s) => s.id === currentSequence)?.keyframes;
+  const replayStep = useReplayController((s) => s.step);
+  const replayIsPlaying = useReplayController((s) => s.isPlaying);
+
+  const selectedSequence = currentSequence
+    ? sequences.find((s) => s.id === currentSequence) ?? null
+    : null;
+  const keyframes = [...(selectedSequence?.keyframes ?? [])].sort((a, b) => a.step - b.step);
   const minHeight = 0.5;
 
   // Keep the camera from tilting below the horizon to avoid ground crossing and stuttery clamp behavior.
@@ -88,43 +96,97 @@ export default function CameraController({ roadBounds }: { roadBounds: Bounds | 
     controls.current.target.y = Math.max(controls.current.target.y, minHeight);
   }, []);
 
-  const timeRef = useRef(0);
-  useFrame((_state, delta) => {
-    if (!camera || !controls.current || !isPlaying || !keyframes || keyframes.length < 2) {
-      if (controls.current) {
-        controls.current.update();
-      }
-      return
-    }
+  const lastAppliedStepRef = useRef<number | null>(null);
+  const smoothStepRef = useRef(0);
 
-    if (currentIndex >= keyframes.length - 1) {
-      useCameraStore.getState().stopAnimation();
-    }
-
-    const from = keyframes[currentIndex];
-    const to = keyframes[currentIndex + 1];
-    if (!from || !to) return;
-
-    timeRef.current += delta;
-    const t = Math.min(timeRef.current / from.duration, 1);
-
-    // interpolate position/target
+  const interpolateKeyframes = (from: CameraKeyframe, to: CameraKeyframe, t: number) => {
     camera.position.lerpVectors(from.position, to.position, t);
     camera.updateMatrix();
     const currentTarget = new Vector3().lerpVectors(from.target, to.target, t);
     currentTarget.y = Math.max(currentTarget.y, minHeight);
     controls.current.target.copy(currentTarget);
     controls.current.update();
+  };
 
-    // advance keyframe when done
-    if (t >= 1) {
-      timeRef.current = 0;
-      if (currentIndex < keyframes.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-      } else {
-        useCameraStore.getState().stopAnimation();
+  const applyKeyframePose = (keyframe: CameraKeyframe) => {
+    camera.position.copy(keyframe.position);
+    camera.updateMatrix();
+
+    const clampedTarget = new Vector3().copy(keyframe.target);
+    clampedTarget.y = Math.max(clampedTarget.y, minHeight);
+    controls.current.target.copy(clampedTarget);
+    controls.current.update();
+  };
+
+  const applyPoseForTimelineStep = (timelineStep: number): void => {
+    if (!keyframes.length || !controls.current) return;
+
+    const first = keyframes[0];
+    if (timelineStep <= first.step) {
+      applyKeyframePose(first);
+      return;
+    }
+
+    for (let i = 0; i < keyframes.length - 1; i++) {
+      const from = keyframes[i];
+      const to = keyframes[i + 1];
+      if (!from || !to) continue;
+
+      const travelStart = from.step;
+      const travelEnd = Math.max(to.step, travelStart + 1);
+      if (timelineStep <= travelEnd) {
+        const t = (timelineStep - travelStart) / (travelEnd - travelStart);
+        interpolateKeyframes(from, to, Math.min(Math.max(t, 0), 1));
+        return;
       }
     }
+
+    const last = keyframes[keyframes.length - 1];
+    applyKeyframePose(last);
+  };
+
+  useFrame(() => {
+    if (!camera || !controls.current) {
+      return;
+    }
+
+    if (keyframes.length === 0) {
+      if (controls.current) {
+        controls.current.update();
+      }
+      return
+    }
+
+    // While replay is playing, smooth between discrete replay step updates.
+    if (replayIsPlaying) {
+      const targetStep = replayStep;
+
+      // Snap immediately on rewinds/seek-back to avoid trailing behind the slider.
+      if (targetStep < smoothStepRef.current) {
+        smoothStepRef.current = targetStep;
+      } else {
+        smoothStepRef.current = MathUtils.lerp(
+          smoothStepRef.current,
+          targetStep,
+          CAMERA_STEP_LERP_ALPHA
+        );
+      }
+
+      applyPoseForTimelineStep(smoothStepRef.current);
+      lastAppliedStepRef.current = replayStep;
+      return;
+    }
+
+    // While paused, only snap camera when step changed (e.g. user seek),
+    // otherwise keep manual camera edits untouched.
+    if (lastAppliedStepRef.current !== replayStep) {
+      smoothStepRef.current = replayStep;
+      applyPoseForTimelineStep(replayStep);
+      lastAppliedStepRef.current = replayStep;
+      return;
+    }
+
+    controls.current.update();
   });
 
   return (

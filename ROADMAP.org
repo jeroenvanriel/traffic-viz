@@ -1,15 +1,21 @@
 #+title: Feature planning
 
-* camera
-** TODO scene finder
+* general camera
+** DONE scene finder
 Compute a camera position that is guaranteed to show a part of the scene.
 ** DONE scene-specific initial camera
 ** DONE save keyframes per scene to the backend
 ** DONE implement MapControls
 The target of the camera should always stay on the horizontal plane (or slightly above it).
 ** DONE rescaling of 3d canvas after window resize
+* TODO better timeline control
+1. Currently, seeking through the timeline is only possible at "snapshots". When streaming, the "delta" packets are used to compute the state between snapshots. The main reason for doing so is to limit the amount of data traffic between backend and frontend. As a next step, we would like to allow slightly finer seeking as follows: the timeline slider does not "snap", but the closest snapshot is always shown. Only when the user stops seeking, by releasing the mouse button or after some fixed timeout, do we calculate the exact system state between snapshots by applying the necessary list of delta packets at once.
+
+2. When te user clicks on a keyframe marker, we could optionally jump to the corresponding step.
 * gui
 ** DONE sidebar toggle button
+** TODO loading spinner for network loading
+Instead of showing a small empty patch of green, show a spinner animation with "network loading".
 * rendering and network loading
 ** TODO understand, document and fix SUMO network loading
 Ignore empty polygons on the backend.
@@ -54,9 +60,10 @@ Help me design the next feature of my 3d traffic visualization project. I want t
 Help me with the following:
 - How to do the actual uploading? I have a FastAPI backend and the frontend is built using React and three.js for the 3d rendering. Provide the code for the api endpoint and some skeleton for the uploading code in the react component.
 - Can you provide some skeleton for the frontend component, with a sidebar containing sliders for the 4 categories listed above?
-* TODO hidden debuging tools
-** deltas inspector
+* miscellaneous
+** TODO hidden debuging tools
+*** deltas inspector
 List of current deltas in memory.
-* IDEA online map
+** IDEA online map
 Use Leaflet or OSM to show a real map, instead of only the extracted SUMO netedit network.
 
