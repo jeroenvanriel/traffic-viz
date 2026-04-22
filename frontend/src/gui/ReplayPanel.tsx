@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useCallback } from "react";
 import type { RefObject } from "react";
 import { useReplayController } from "../stores/ReplayController";
-import { CameraTimelineLayer, KEYFRAME_KNOB_Y } from "./CameraTimelineEditor";
+import { CameraTimelineLayer } from "./CameraTimelineEditor";
 import {
   TIMELINE_BASELINE_Y,
   TIMELINE_INTERACTION_SPLIT_Y,
@@ -25,22 +25,16 @@ export default function ReplayPanel({
   isVisible: boolean;
 }) {
   const [isSeeking, setIsSeeking] = useState(false);
+  const [timelinePixelSize, setTimelinePixelSize] = useState({
+    width: TIMELINE_VIEWBOX_WIDTH,
+    height: TIMELINE_VIEWBOX_HEIGHT,
+  });
 
   const info = useReplayController((s) => s.info);
   const step = useReplayController((s) => s.step);
   const seek = useReplayController((s) => s.seek);
 
   const { isPlaying, play, pause } = useReplayController();
-  const {
-    keyframes,
-    activeKeyframeId,
-    beginDrag,
-    handleKeyframeClick,
-    handleKeyframeContextMenu,
-    justDraggedKeyframeRef,
-    timelineMaxStep,
-  } = cameraTimeline;
-
   const replayMaxStep = info ? info.nSteps - 1 : 0;
   const handleSeekFromClientX = useCallback((clientX: number) => {
     if (!info || !timelineRef.current) return;
@@ -102,17 +96,54 @@ export default function ReplayPanel({
     };
   }, [handleSeekFromClientX, isSeeking]);
 
+  useEffect(() => {
+    if (!info) return;
+
+    const svg = timelineRef.current;
+    if (!svg) return;
+    const parent = svg.parentElement;
+
+    const updateSize = () => {
+      const rect = svg.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      setTimelinePixelSize({ width: rect.width, height: rect.height });
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(svg);
+    if (parent) {
+      observer.observe(parent);
+    }
+    window.addEventListener("resize", updateSize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateSize);
+    };
+  }, [timelineRef, isVisible, info]);
+
   if (!info) return null;
 
-  const replayMarkerLeftPercent =
-    (toXFromStep(step, replayMaxStep) / TIMELINE_VIEWBOX_WIDTH) * 100;
-  const replayMarkerTopPercent =
-    (TIMELINE_BASELINE_Y / TIMELINE_VIEWBOX_HEIGHT) * 100;
-  const keyframeMarkerTopPercent = (KEYFRAME_KNOB_Y / TIMELINE_VIEWBOX_HEIGHT) * 100;
+  const hasSelectedSequence = cameraTimeline.selectedSequence !== null;
+  const replayMarkerX = toXFromStep(step, replayMaxStep);
+  const replayMarkerY = hasSelectedSequence ? TIMELINE_BASELINE_Y : TIMELINE_VIEWBOX_HEIGHT / 2;
+  const seekRectY = hasSelectedSequence ? TIMELINE_INTERACTION_SPLIT_Y : 0;
+  const seekRectHeight = hasSelectedSequence
+    ? TIMELINE_VIEWBOX_HEIGHT - TIMELINE_INTERACTION_SPLIT_Y
+    : TIMELINE_VIEWBOX_HEIGHT;
+  const baselineY = hasSelectedSequence ? TIMELINE_BASELINE_Y : TIMELINE_VIEWBOX_HEIGHT / 2;
+  const scaleX = timelinePixelSize.width / TIMELINE_VIEWBOX_WIDTH;
+  const scaleY = timelinePixelSize.height / TIMELINE_VIEWBOX_HEIGHT;
+  const markerPx = 5;
+  const keyframeMarkerRadiusX = markerPx / Math.max(scaleX, 0.0001);
+  const keyframeMarkerRadiusY = markerPx / Math.max(scaleY, 0.0001);
+  const stepMarkerRadiusX = markerPx / Math.max(scaleX, 0.0001);
+  const stepMarkerRadiusY = markerPx / Math.max(scaleY, 0.0001);
 
   return (
     <div
-      className={`absolute bottom-4 z-10 left-1/2 -translate-x-1/2 w-[80%] bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-4 backdrop-blur-sm transition-all duration-300 ${
+      className={`absolute bottom-4 z-10 left-1/2 -translate-x-1/2 w-[80%] bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-2 backdrop-blur-sm transition-all duration-300 ${
         isVisible
           ? 'opacity-100 translate-y-0 pointer-events-auto'
           : 'opacity-0 translate-y-4 pointer-events-none'
@@ -125,17 +156,37 @@ export default function ReplayPanel({
             width="100%"
             viewBox={`0 0 ${TIMELINE_VIEWBOX_WIDTH} ${TIMELINE_VIEWBOX_HEIGHT}`}
             preserveAspectRatio="none"
-            className="w-full h-12 rounded border border-gray-200 bg-gray-50"
+            className={`w-full rounded border border-gray-200 bg-gray-50 ${hasSelectedSequence ? "h-12" : "h-8"}`}
             onContextMenu={(event) => {
               event.preventDefault();
               event.stopPropagation();
             }}
           >
+            {/** Camera timeline layer: keyframe markers */}
+            {hasSelectedSequence && (
+              <CameraTimelineLayer
+                bindings={cameraTimeline}
+                markerRadiusX={keyframeMarkerRadiusX}
+                markerRadiusY={keyframeMarkerRadiusY}
+              />
+            )}
+
+            {/** Base line */}
+            <line
+              x1={TIMELINE_PADDING_X}
+              y1={baselineY}
+              x2={TIMELINE_VIEWBOX_WIDTH - TIMELINE_PADDING_X}
+              y2={baselineY}
+              stroke="#9ca3af"
+              strokeWidth={1.5}
+            />
+
+            {/** Interaction layer for step seeking */}
             <rect
               x={TIMELINE_PADDING_X}
-              y={TIMELINE_INTERACTION_SPLIT_Y}
+              y={seekRectY}
               width={TIMELINE_VIEWBOX_WIDTH - TIMELINE_PADDING_X * 2}
-              height={TIMELINE_VIEWBOX_HEIGHT - TIMELINE_INTERACTION_SPLIT_Y}
+              height={seekRectHeight}
               fill="transparent"
               className="cursor-ew-resize"
               onMouseDown={(event) => {
@@ -146,59 +197,14 @@ export default function ReplayPanel({
               }}
             />
 
-            <CameraTimelineLayer bindings={cameraTimeline} />
-
-            <line
-              x1={TIMELINE_PADDING_X}
-              y1={TIMELINE_BASELINE_Y}
-              x2={TIMELINE_VIEWBOX_WIDTH - TIMELINE_PADDING_X}
-              y2={TIMELINE_BASELINE_Y}
-              stroke="#9ca3af"
-              strokeWidth={1.5}
-            />
-          </svg>
-
-          <div className="pointer-events-none absolute inset-0">
-            {keyframes.map((keyframe) => {
-              const xPercent =
-                (toXFromStep(keyframe.step, timelineMaxStep) / TIMELINE_VIEWBOX_WIDTH) * 100;
-              const isActive = keyframe.id === activeKeyframeId;
-
-              return (
-                <div
-                  key={keyframe.id}
-                  className={`pointer-events-auto absolute h-[10px] w-[10px] -translate-x-1/2 -translate-y-1/2 rotate-45 ${
-                    isActive ? "cursor-ew-resize bg-blue-600" : "cursor-pointer bg-slate-700"
-                  }`}
-                  style={{
-                    left: `${xPercent}%`,
-                    top: `${keyframeMarkerTopPercent}%`,
-                  }}
-                  onMouseDown={(event) => {
-                    if (event.button !== 0) return;
-                    event.stopPropagation();
-                    event.preventDefault();
-                    beginDrag({ type: "keyframe", id: keyframe.id, moved: false });
-                  }}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (justDraggedKeyframeRef.current === keyframe.id) {
-                      justDraggedKeyframeRef.current = null;
-                      return;
-                    }
-                    handleKeyframeClick(keyframe.id);
-                  }}
-                  onContextMenu={(event) => handleKeyframeContextMenu(event, keyframe.id)}
-                />
-              );
-            })}
-
-            <div
-              className="pointer-events-auto absolute h-[10px] w-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-900 cursor-ew-resize"
-              style={{
-                left: `${replayMarkerLeftPercent}%`,
-                top: `${replayMarkerTopPercent}%`,
-              }}
+            {/** Current step marker */}
+            <ellipse
+              cx={replayMarkerX}
+              cy={replayMarkerY}
+              rx={stepMarkerRadiusX}
+              ry={stepMarkerRadiusY}
+              fill="#2563eb"
+              className="cursor-ew-resize"
               onMouseDown={(event) => {
                 if (event.button !== 0) return;
                 event.stopPropagation();
@@ -206,9 +212,8 @@ export default function ReplayPanel({
                 beginSeekAtClientX(event.clientX);
               }}
             />
-          </div>
+          </svg>
         </div>
-
       </div>
     </div>
   );

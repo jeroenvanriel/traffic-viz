@@ -232,12 +232,20 @@ export function useCameraTimelineEditor(
 
 export function CameraTimelineLayer({
   bindings,
+  markerRadiusX,
+  markerRadiusY,
 }: {
   bindings: CameraTimelineEditorBindings;
+  markerRadiusX: number;
+  markerRadiusY: number;
 }) {
   const {
     keyframes,
     activeKeyframeId,
+    beginDrag,
+    handleKeyframeClick,
+    handleKeyframeContextMenu,
+    justDraggedKeyframeRef,
     handleTimelineClick,
     timelineMaxStep,
   } = bindings;
@@ -264,10 +272,38 @@ export function CameraTimelineLayer({
               y1={KEYFRAME_KNOB_Y}
               x2={x}
               y2={KEYFRAME_TRACK_Y}
-              stroke={isActive ? "#2563eb" : "#475569"}
+              stroke={isActive ? "#2563eb" : "#9ca3af"}
               strokeWidth={1.5}
               vectorEffect="non-scaling-stroke"
               pointerEvents="none"
+            />
+            <polygon
+              points={`${x - markerRadiusX},${KEYFRAME_KNOB_Y - markerRadiusY*0.6} ${x + markerRadiusX},${KEYFRAME_KNOB_Y - markerRadiusY*0.6} ${x + markerRadiusX},${KEYFRAME_KNOB_Y} ${x},${KEYFRAME_KNOB_Y + markerRadiusY} ${x - markerRadiusX},${KEYFRAME_KNOB_Y}`}
+              fill={isActive ? "#2563eb" : "#616161"}
+              pointerEvents="none"
+            />
+            <ellipse
+              cx={x}
+              cy={KEYFRAME_KNOB_Y}
+              rx={markerRadiusX}
+              ry={markerRadiusY}
+              fill="transparent"
+              className={isActive ? "cursor-ew-resize" : "cursor-pointer"}
+              onMouseDown={(event) => {
+                if (event.button !== 0) return;
+                event.stopPropagation();
+                event.preventDefault();
+                beginDrag({ type: "keyframe", id: keyframe.id, moved: false });
+              }}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (justDraggedKeyframeRef.current === keyframe.id) {
+                  justDraggedKeyframeRef.current = null;
+                  return;
+                }
+                handleKeyframeClick(keyframe.id);
+              }}
+              onContextMenu={(event) => handleKeyframeContextMenu(event, keyframe.id)}
             />
           </g>
         );
