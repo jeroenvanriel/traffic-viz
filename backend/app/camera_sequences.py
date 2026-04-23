@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -22,6 +23,7 @@ class CameraKeyframePayload(BaseModel):
 class CameraSequencePayload(BaseModel):
     id: str
     name: str
+    interpolation_type: Literal["linear", "catmull_rom"] = "linear"
     keyframes: list[CameraKeyframePayload]
 
 

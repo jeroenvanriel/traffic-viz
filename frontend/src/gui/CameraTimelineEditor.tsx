@@ -33,6 +33,7 @@ export type CameraTimelineEditorBindings = {
   addSequence: (name: string) => string;
   removeSequence: (id: string) => void;
   renameSequence: (id: string, name: string) => void;
+  setInterpolationType: (id: string, interpolationType: "linear" | "catmull_rom") => void;
   beginDrag: (next: DragState) => void;
   handleKeyframeClick: (keyframeId: string) => void;
   handleKeyframeContextMenu: (event: React.MouseEvent, keyframeId: string) => void;
@@ -54,6 +55,7 @@ export function useCameraTimelineEditor(
     addSequence,
     removeSequence,
     renameSequence,
+    setInterpolationType,
     persistSequence,
     upsertKeyframe,
     updateKeyframePose,
@@ -221,6 +223,7 @@ export function useCameraTimelineEditor(
     addSequence,
     removeSequence,
     renameSequence,
+    setInterpolationType,
     beginDrag,
     handleKeyframeClick,
     handleKeyframeContextMenu,

@@ -10,6 +10,7 @@ type CameraSequenceListProps = {
   addSequence: (name: string) => string;
   renameSequence: (id: string, name: string) => void;
   removeSequence: (id: string) => void;
+  setInterpolationType: (id: string, interpolationType: "linear" | "catmull_rom") => void;
 };
 
 type EditingState = {
@@ -24,6 +25,7 @@ export function CameraSequenceList({
   addSequence,
   renameSequence,
   removeSequence,
+  setInterpolationType,
 }: CameraSequenceListProps) {
   const [editingState, setEditingState] = useState<EditingState | null>(null);
   const { confirm } = useConfirmation();
@@ -76,6 +78,10 @@ export function CameraSequenceList({
       removeSequence(sequenceId);
     }
   };
+
+  const selectedSequence = selectedSequenceId
+    ? sequences.find((s) => s.id === selectedSequenceId) ?? null
+    : null;
 
   return (
     <div className="space-y-3">
@@ -175,6 +181,28 @@ export function CameraSequenceList({
       >
         + Add Sequence
       </button>
+
+      {selectedSequence && (
+        <div className="space-y-1">
+          <label className="block text-[11px] font-semibold text-gray-600" htmlFor="camera-sequence-interpolation">
+            Interpolation
+          </label>
+          <select
+            id="camera-sequence-interpolation"
+            value={selectedSequence.interpolationType}
+            onChange={(event) => {
+              setInterpolationType(
+                selectedSequence.id,
+                event.target.value as "linear" | "catmull_rom"
+              );
+            }}
+            className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-700"
+          >
+            <option value="linear">Linear</option>
+            <option value="catmull_rom">Catmull-Rom</option>
+          </select>
+        </div>
+      )}
 
       {selectedSequenceId && (
         <div className="text-[11px] text-gray-500">

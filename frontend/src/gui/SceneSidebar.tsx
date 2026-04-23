@@ -235,6 +235,7 @@ export default function SceneSidebar({
                     addSequence={cameraTimeline.addSequence}
                     renameSequence={cameraTimeline.renameSequence}
                     removeSequence={cameraTimeline.removeSequence}
+                    setInterpolationType={cameraTimeline.setInterpolationType}
                   />
                 </div>
                 <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">

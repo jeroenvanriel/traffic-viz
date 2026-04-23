@@ -13,6 +13,7 @@ export type CameraKeyframe = {
 export type CameraSequence = {
   id: string;
   name: string;
+  interpolationType: "linear" | "catmull_rom";
   keyframes: CameraKeyframe[];
 };
 
@@ -26,6 +27,7 @@ type KeyframeStore = {
   addSequence:     (name: string) => string;
   removeSequence:  (sequenceId: string) => void;
   renameSequence:  (sequenceId: string, name: string) => void;
+  setInterpolationType: (sequenceId: string, interpolationType: "linear" | "catmull_rom") => void;
   upsertKeyframe:  (sequenceId: string, keyframe: CameraKeyframe) => void;
   updateKeyframePose: (sequenceId: string, keyframeId: string, position: Vector3, target: Vector3) => void;
   setKeyframeStep: (sequenceId: string, keyframeId: string, step: number, persist?: boolean) => void;
@@ -44,6 +46,7 @@ type CameraKeyframePayload = {
 type CameraSequencePayload = {
   id: string;
   name: string;
+  interpolation_type?: "linear" | "catmull_rom";
   keyframes: CameraKeyframePayload[];
 };
 
@@ -67,6 +70,7 @@ function toSequencePayload(sequence: CameraSequence): CameraSequencePayload {
   return {
     id: sequence.id,
     name: sequence.name,
+    interpolation_type: sequence.interpolationType,
     keyframes: sequence.keyframes.map((k) => ({
       id: k.id,
       position: vectorToPayload(k.position),
@@ -80,6 +84,7 @@ function toSequence(payload: CameraSequencePayload): CameraSequence {
   return {
     id: payload.id,
     name: payload.name,
+    interpolationType: payload.interpolation_type ?? "linear",
     keyframes: sortKeyframes(payload.keyframes.map((k) => {
       return {
         id: k.id,
@@ -149,7 +154,7 @@ export const useKeyframeStore = create<KeyframeStore>()(
 
       addSequence: (name) => {
         const id = nanoid();
-        const sequence: CameraSequence = { id, name, keyframes: [] };
+        const sequence: CameraSequence = { id, name, interpolationType: "linear", keyframes: [] };
         set((state) => { state.sequences.push(sequence) });
 
         const sceneId = get().currentSceneId;
@@ -173,6 +178,14 @@ export const useKeyframeStore = create<KeyframeStore>()(
         const seq = state.sequences.find((s) => s.id === sequenceId);
         if (seq) {
           seq.name = name;
+          persistSequenceNow(get().currentSceneId, seq);
+        }
+      }),
+
+      setInterpolationType: (sequenceId, interpolationType) => set((state) => {
+        const seq = state.sequences.find((s) => s.id === sequenceId);
+        if (seq) {
+          seq.interpolationType = interpolationType;
           persistSequenceNow(get().currentSceneId, seq);
         }
       }),

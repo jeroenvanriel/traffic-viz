@@ -5,7 +5,7 @@ import { useCameraStore } from "../stores/CameraStore";
 import { type CameraKeyframe, useKeyframeStore } from "../stores/KeyframeStore";
 import { useReplayController } from "../stores/ReplayController";
 import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
-import { MathUtils, PerspectiveCamera, Vector3 } from "three";
+import { CatmullRomCurve3, MathUtils, PerspectiveCamera, Vector3 } from "three";
 import type { Bounds } from "./Road";
 
 const CAMERA_STEP_LERP_ALPHA = 0.2;
@@ -84,6 +84,7 @@ export default function CameraController({ roadBounds }: { roadBounds: Bounds | 
   const selectedSequence = currentSequence
     ? sequences.find((s) => s.id === currentSequence) ?? null
     : null;
+  const interpolationType = selectedSequence?.interpolationType ?? "linear";
   const keyframes = [...(selectedSequence?.keyframes ?? [])].sort((a, b) => a.step - b.step);
   const minHeight = 0.5;
 
@@ -120,6 +121,37 @@ export default function CameraController({ roadBounds }: { roadBounds: Bounds | 
 
   const applyPoseForTimelineStep = (timelineStep: number): void => {
     if (!keyframes.length || !controls.current) return;
+
+    if (interpolationType === "catmull_rom" && keyframes.length > 1) {
+      const first = keyframes[0];
+      const last = keyframes[keyframes.length - 1];
+
+      if (timelineStep <= first.step) {
+        applyKeyframePose(first);
+        return;
+      }
+
+      if (timelineStep >= last.step) {
+        applyKeyframePose(last);
+        return;
+      }
+
+      const stepRange = Math.max(1, last.step - first.step);
+      const t = MathUtils.clamp((timelineStep - first.step) / stepRange, 0, 1);
+
+      // Spline is built from the full keyframe set so interpolation remains globally smooth.
+      const positionCurve = new CatmullRomCurve3(keyframes.map((k) => k.position.clone()));
+      const targetCurve = new CatmullRomCurve3(keyframes.map((k) => k.target.clone()));
+
+      camera.position.copy(positionCurve.getPoint(t));
+      camera.updateMatrix();
+
+      const splineTarget = targetCurve.getPoint(t);
+      splineTarget.y = Math.max(splineTarget.y, minHeight);
+      controls.current.target.copy(splineTarget);
+      controls.current.update();
+      return;
+    }
 
     const first = keyframes[0];
     if (timelineStep <= first.step) {
