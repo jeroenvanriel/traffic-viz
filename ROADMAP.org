@@ -1,6 +1,13 @@
 #+title: Feature planning
 
-* general camera
+* camera
+** TODO bug: interpolation interferring with playback auto-starting when recording
+When the user uses the "Record from beginning" functionality and the current step is not the first step, the state is first set to the first step, which causes some vehicles to "fly" to their starting positions, which is visible in the recording.
+** TODO better timeline control
+1. Currently, seeking through the timeline is only possible at "snapshots". When streaming, the "delta" packets are used to compute the state between snapshots. The main reason for doing so is to limit the amount of data traffic between backend and frontend. As a next step, we would like to allow slightly finer seeking as follows: the timeline slider does not "snap", but the closest snapshot is always shown. Only when the user stops seeking, by releasing the mouse button or after some fixed timeout, do we calculate the exact system state between snapshots by applying the necessary list of delta packets at once.
+
+2. When te user clicks on a keyframe marker, we could optionally jump to the corresponding step.
+** DONE Catmull-Rom camera path interpolation
 ** DONE scene finder
 Compute a camera position that is guaranteed to show a part of the scene.
 ** DONE scene-specific initial camera
@@ -8,14 +15,10 @@ Compute a camera position that is guaranteed to show a part of the scene.
 ** DONE implement MapControls
 The target of the camera should always stay on the horizontal plane (or slightly above it).
 ** DONE rescaling of 3d canvas after window resize
-* TODO better timeline control
-1. Currently, seeking through the timeline is only possible at "snapshots". When streaming, the "delta" packets are used to compute the state between snapshots. The main reason for doing so is to limit the amount of data traffic between backend and frontend. As a next step, we would like to allow slightly finer seeking as follows: the timeline slider does not "snap", but the closest snapshot is always shown. Only when the user stops seeking, by releasing the mouse button or after some fixed timeout, do we calculate the exact system state between snapshots by applying the necessary list of delta packets at once.
-
-2. When te user clicks on a keyframe marker, we could optionally jump to the corresponding step.
 * gui
-** DONE sidebar toggle button
 ** TODO loading spinner for network loading
 Instead of showing a small empty patch of green, show a spinner animation with "network loading".
+** DONE sidebar toggle button
 * rendering and network loading
 ** TODO understand, document and fix SUMO network loading
 Ignore empty polygons on the backend.
@@ -28,7 +31,7 @@ junction type
 
 [2026-03-17 di] It seems that something has changed in how some edge/lane shapes
 are stored. The file that Marko sent has closed paths, which upon inspection
-should probably have been not closed, like they are when I download the same OSM
+should probably have not been closed, like they are when I download the same OSM
 data myself.
 ** DONE generate road line markings
 Similar to what we did before with ClipperJS.
