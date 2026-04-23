@@ -17,6 +17,7 @@ type ReplayController = {
   replaySpeed: number;
   interpolationAlpha: number;
   isPlaying: boolean;
+  skipVehicleInterpolation: boolean;
   snapshots: Partial<Snapshot[]>;
 
   deltaBuffer: Delta[];
@@ -44,6 +45,7 @@ export const useReplayController = create<ReplayController>((set, get) => ({
   replaySpeed: 1,
   interpolationAlpha: 0.1,
   isPlaying: false,
+  skipVehicleInterpolation: false,
   snapshots: [],
 
   deltaBuffer: [],
@@ -57,7 +59,7 @@ export const useReplayController = create<ReplayController>((set, get) => ({
   },
   pause: () => set({ isPlaying: false }),
   reset: () => set({ 
-    info: null, step: 0, time: 0, isPlaying: false, snapshots: [],
+    info: null, step: 0, time: 0, isPlaying: false, skipVehicleInterpolation: false, snapshots: [],
     deltaBuffer: [], deltaHead: 0, nextFetchStart: 0, isFetching: false,
   }),
 
@@ -115,7 +117,14 @@ export const useReplayController = create<ReplayController>((set, get) => ({
 
     // set time and also clear the delta buffer
     // (which is populate separately after user stops seeking)
-    set({ step: i, time: snapshot['t'], nextFetchStart: i, deltaBuffer: [], deltaHead: 0 });
+    set({
+      step: i,
+      time: snapshot['t'],
+      nextFetchStart: i,
+      deltaBuffer: [],
+      deltaHead: 0,
+      skipVehicleInterpolation: true,
+    });
   },
 
   fetchDeltas: async () => {
@@ -175,6 +184,7 @@ export const useReplayController = create<ReplayController>((set, get) => ({
       set(state => ({
         deltaHead: i,
         step: state.step + applied,
+        skipVehicleInterpolation: false,
       }));
     }
 

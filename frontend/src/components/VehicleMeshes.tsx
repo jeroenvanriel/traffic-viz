@@ -44,6 +44,7 @@ export default function VehicleMeshes() {
   const isPlaying = useReplayController((s) => s.isPlaying);
   const replaySpeed = useReplayController((s) => s.replaySpeed);
   const interpolationAlpha = useReplayController((s) => s.interpolationAlpha);
+  const skipVehicleInterpolation = useReplayController((s) => s.skipVehicleInterpolation);
   const info = useReplayController((s) => s.info);
 
   // preload GLTF models when vehicle types are loaded
@@ -65,7 +66,7 @@ export default function VehicleMeshes() {
       if (!v || !mesh) return;
       // interpolate to target position/orientation
       const { pos, quat } = getTarget(v);
-      if (isPlaying) {
+      if (isPlaying && !skipVehicleInterpolation) {
         mesh.position.lerp(pos, interpolationAlpha * replaySpeed);
         mesh.quaternion.slerp(quat, interpolationAlpha * replaySpeed);
       } else {

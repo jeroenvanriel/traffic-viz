@@ -6,6 +6,7 @@ import { useReplayController } from "../stores/ReplayController";
 import { useThreeStore } from "../stores/ThreeStore";
 
 type RecordingStartMode = "current" | "from-start";
+const RECORD_FROM_START_PREROLL_MS = 250;
 
 type CanvasRecorderStore = {
   isRecording: boolean;
@@ -38,6 +39,10 @@ export default function CanvasRecorderController() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  const wait = (ms: number) => new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+
   useEffect(() => {
     if (!isRecording || !info) return;
     if (step >= info.nSteps - 1) {
@@ -68,6 +73,11 @@ export default function CanvasRecorderController() {
 
       if (startMode === "from-start") {
         await seek(0);
+        if (cancelled || !useCanvasRecorderStore.getState().isRecording) {
+          return;
+        }
+
+        await wait(RECORD_FROM_START_PREROLL_MS);
         if (cancelled || !useCanvasRecorderStore.getState().isRecording) {
           return;
         }
