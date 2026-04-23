@@ -1,14 +1,23 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import copy_metadata, collect_data_files
+
+datas = (
+    # collect additional metadata for some packages, which they mostly
+    # use to introspect their own version
+    copy_metadata('shapely') +
+    collect_data_files('pygeoops') +
+    [
+        ('../frontend/dist/index.html', 'frontend/dist'),
+        ('../frontend/dist/assets', 'frontend/dist/assets'),
+    ]
+)
 
 a = Analysis(
     ['app/main.py'],
     pathex=[],
     binaries=[],
-    datas=[
-        ('../frontend/dist/index.html', 'frontend/dist'),
-        ('../frontend/dist/assets', 'frontend/dist/assets'),
-    ],
+    datas=datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
