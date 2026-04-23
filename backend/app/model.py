@@ -223,7 +223,10 @@ def list_vehicle_types(request: Request):
             continue
 
         mapping[vehicle_type] = {
+            "model_id": record["model_id"],
             "url": f"{base_url}/model-files/{stored_filename}",
+            "stored_filename": stored_filename,
+            "original_filename": record["original_filename"],
             "transform_config": record["transform_config"],
         }
 

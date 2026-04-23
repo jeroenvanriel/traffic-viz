@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { Vector3, Euler, Quaternion, Object3D } from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useVehicleStore, type VehicleState } from '../stores/VehicleStore';
 import { useReplayController } from '../stores/ReplayController';
+import { useVehicleTypeStore, type TransformConfig } from '../stores/VehicleTypeStore';
 
 function getTarget(v: VehicleState) {
   // target position/orientation
@@ -19,21 +20,6 @@ function getTarget(v: VehicleState) {
 
   return { pos: targetPos, quat: targetQuat };
 }
-
-type Vec3 = [number, number, number];
-
-type TransformConfig = {
-  scale: Vec3;
-  rotation: Vec3;
-  offset: Vec3;
-};
-
-type VehicleTypeModel = {
-  url: string;
-  transform_config: TransformConfig;
-};
-
-type VehicleTypesResponse = Record<string, VehicleTypeModel>;
 
 function VehicleModel({ modelUrl, transformConfig }: { modelUrl: string; transformConfig: TransformConfig }) {
   const { scene } = useGLTF(modelUrl);
@@ -52,69 +38,13 @@ function VehicleModel({ modelUrl, transformConfig }: { modelUrl: string; transfo
 export default function VehicleMeshes() {
   const vehicles = useVehicleStore((s) => s.vehicles);
   const vehicleMeshRefs = useRef<Record<string, Object3D>>({});
-  const [modelByType, setModelByType] = useState<Record<string, VehicleTypeModel>>({});
+  const modelByType = useVehicleTypeStore((s) => s.modelByType);
 
   const { tick } = useReplayController();
   const isPlaying = useReplayController((s) => s.isPlaying);
   const replaySpeed = useReplayController((s) => s.replaySpeed);
   const interpolationAlpha = useReplayController((s) => s.interpolationAlpha);
   const info = useReplayController((s) => s.info);
-
-  // load vehicle type -> model mapping and keep it synced across tabs
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadVehicleTypes() {
-      try {
-        const res = await fetch('http://localhost:8000/api/vehicle-types');
-        if (!res.ok) return;
-
-        const mapping: VehicleTypesResponse = await res.json();
-        if (mounted) {
-          setModelByType(mapping);
-        }
-      } catch {
-        if (mounted) {
-          setModelByType({});
-        }
-      }
-    }
-
-    function handleModelUpdateBroadcast(event: MessageEvent) {
-      if (event.data?.type === 'model-transform-updated') {
-        loadVehicleTypes();
-      }
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') {
-        loadVehicleTypes();
-      }
-    }
-
-    function handleWindowFocus() {
-      loadVehicleTypes();
-    }
-
-    const channel =
-      typeof BroadcastChannel !== 'undefined'
-        ? new BroadcastChannel('model-config-updates')
-        : null;
-    channel?.addEventListener('message', handleModelUpdateBroadcast);
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleWindowFocus);
-
-    loadVehicleTypes();
-
-    return () => {
-      mounted = false;
-      channel?.removeEventListener('message', handleModelUpdateBroadcast);
-      channel?.close();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleWindowFocus);
-    };
-  }, [info?.sceneId]);
 
   // preload GLTF models when vehicle types are loaded
   useEffect(() => {

@@ -11,6 +11,7 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import PlaybackControls from "./PlaybackControls";
 import CanvasRecorderPanel from "./CanvasRecorderPanel";
 import SaveInitCameraButton from "./CameraPanel";
+import VehicleTypesPanel from "./VehicleTypesPanel";
 import { CameraSequenceList } from "../components/CameraSequenceList";
 import type { CameraTimelineEditorBindings } from "./CameraTimelineEditor";
 
@@ -258,6 +259,10 @@ export default function SceneSidebar({
                     </label>
                     <SaveInitCameraButton />
                   </div>
+                </div>
+
+                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                  <VehicleTypesPanel />
                 </div>
               </section>
             )}

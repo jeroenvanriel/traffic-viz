@@ -11,10 +11,12 @@ import { useVehicleStore } from "../stores/VehicleStore";
 import { useReplayController } from "../stores/ReplayController";
 import { useKeyframeStore } from "../stores/KeyframeStore";
 import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
+import { useVehicleTypeStore, useVehicleTypeSync } from "../stores/VehicleTypeStore";
 
 function resetAllReplayStores() {
   useVehicleStore.getState().reset();
   useReplayController.getState().reset();
+  useVehicleTypeStore.getState().reset();
 }
 
 export default function ScenePage() {
@@ -31,6 +33,8 @@ export default function ScenePage() {
   const [isUiVisible, setIsUiVisible] = useState(true);
   const replayMaxStep = info ? info.nSteps - 1 : 0;
   const cameraTimeline = useCameraTimelineEditor(replayMaxStep, timelineRef);
+
+  useVehicleTypeSync(sceneId);
 
   useEffect(() => {
     // clear old data
