@@ -36,6 +36,7 @@ def build_lane_records(root):
                 records.append({
                     "edge_id": edge_id,
                     "lane_index": ix,
+                    "total_lanes": len(lanes),
                     "centerline": centerline,
                     "polygon": poly,
                     "width": width,
@@ -64,6 +65,8 @@ def get_junction_polygons(root):
 def compute_lane_markings(lane_records):
     markings = []
     for record in lane_records:
+        if record["lane_index"] == record["total_lanes"] - 1:
+            continue  # skip last lane (no marking on the left edge)
         centerline = record["centerline"]
         width = record["width"]
 
