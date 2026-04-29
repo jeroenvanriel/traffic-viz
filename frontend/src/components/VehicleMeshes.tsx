@@ -51,7 +51,7 @@ function VehicleShadow({ size, position }: { size: [number, number]; position: [
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
-      position={position}
+      position={[position[0], 0.02, position[2]]}
       scale={[size[0], size[1], 1]}
     >
       <planeGeometry args={[1, 1]} />
@@ -69,6 +69,42 @@ function VehicleShadow({ size, position }: { size: [number, number]; position: [
 function VehicleModel({ modelUrl, transformConfig }: { modelUrl: string; transformConfig: TransformConfig }) {
   const { scene } = useGLTF(modelUrl);
   const clonedScene = useMemo(() => scene.clone(true), [scene]);
+  const rootRef = useRef<Object3D | null>(null);
+  const previousWorldPosition = useRef<Vector3 | null>(null);
+  const wheelNodes = useMemo(() => {
+    const names = new Set(["wheel_fl", "wheel_fr", "wheel_bl", "wheel_br"]);
+    const found: Object3D[] = [];
+
+    clonedScene.traverse((object) => {
+      if (names.has(object.name.toLowerCase())) {
+        found.push(object);
+      }
+    });
+
+    return found;
+  }, [clonedScene]);
+
+  const wheelRadius = useMemo(() => {
+    if (!wheelNodes.length) {
+      return 0.35;
+    }
+
+    const bounds = new Box3();
+    const size = new Vector3();
+
+    // wheelNodes.forEach((wheelNode) => {
+    //   bounds.expandByObject(wheelNode);
+    // });
+    // assume all wheels have the same size, so just use the first one
+    bounds.expandByObject(wheelNodes[0]); 
+
+    bounds.getSize(size);
+    console.log("Wheel bounds size:", size);
+    const radius = Math.max(Math.max(size.x * transformConfig.scale[0], size.y * transformConfig.scale[1], size.z * transformConfig.scale[2]) / 2, 0.15);
+
+    console.log(radius)
+    return radius;
+  }, [wheelNodes, transformConfig.scale]);
 
   // Compute bounds after applying rotation and scale.
   const transformedBounds = useMemo(() => {
@@ -90,8 +126,46 @@ function VehicleModel({ modelUrl, transformConfig }: { modelUrl: string; transfo
     return [transformedBounds.size[0] * 1.8, transformedBounds.size[1] * 1.8] as [number, number];
   }, [transformedBounds.size]);
 
+  useEffect(() => {
+    previousWorldPosition.current = null;
+  }, [modelUrl]);
+
+  useFrame(() => {
+    if (!rootRef.current || wheelNodes.length === 0) {
+      return;
+    }
+
+    const isPlaying = useReplayController.getState().isPlaying;
+    const skipVehicleInterpolation = useReplayController.getState().skipVehicleInterpolation;
+    if (!isPlaying || skipVehicleInterpolation) {
+      previousWorldPosition.current = null;
+      return;
+    }
+
+    const worldPosition = new Vector3();
+    rootRef.current.getWorldPosition(worldPosition);
+
+    if (previousWorldPosition.current) {
+      const displacement = worldPosition.clone().sub(previousWorldPosition.current);
+      const distance = displacement.length();
+
+      if (distance > 0) {
+        const worldForward = new Vector3();
+        rootRef.current.getWorldDirection(worldForward);
+        const direction = displacement.dot(worldForward) >= 0 ? 1 : -1;
+        const rotationDelta = (distance / wheelRadius) * direction;
+
+        wheelNodes.forEach((wheelNode) => {
+          wheelNode.rotation.x += rotationDelta;
+        });
+      }
+    }
+
+    previousWorldPosition.current = worldPosition;
+  });
+
   return (
-    <group position={transformConfig.offset}>
+    <group ref={rootRef} position={transformConfig.offset}>
       <VehicleShadow size={shadowSize} position={transformedBounds.position} />
       <primitive object={clonedScene} scale={transformConfig.scale} rotation={transformConfig.rotation} />
     </group>
