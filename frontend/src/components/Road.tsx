@@ -17,17 +17,15 @@ export interface RoadData {
   bounds: Bounds;
 };
 
-function Ground({ bounds }: { bounds: Bounds }) {
-  const { minx, miny, maxx, maxy } = bounds;
-  const sizex = maxx - minx;
-  const sizey = maxy - miny;
+function Ground() {
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]} // rotate plane to lie flat
-      position={[(maxx + minx) / 2, 0, (maxy + miny) / 2]}
+      position={[0, -0.05, 0]}
+      scale={[5000, 5000, 5000]}
+      receiveShadow
     >
-      <planeGeometry args={[sizex, sizey]} />
-      {/* depthWrite={false} prevents z-fighting with road polygons */}
+      <circleGeometry args={[1, 128]} />
       <meshStandardMaterial color="lightgreen" depthWrite={false} />
     </mesh>
   );
@@ -70,6 +68,7 @@ function RoadPolygons({ polygons }: { polygons: Polygon[] }) {
             geometry={geometry}
             rotation={[Math.PI / 2, 0, 0]} // lay flat on XZ-plane
             position={[0, 0, 0]}
+            receiveShadow
           >
             <meshStandardMaterial color="darkgrey" side={three.DoubleSide} />
           </mesh>
@@ -94,6 +93,7 @@ function MarkingPolygons({ markings }: { markings: Polygon[] | null }) {
             geometry={geometry}
             rotation={[Math.PI / 2, 0, 0]}
             position={[0, 0.01, 0]}
+            receiveShadow
           >
             <meshStandardMaterial color="white" side={three.DoubleSide} />
           </mesh>
@@ -106,7 +106,7 @@ function MarkingPolygons({ markings }: { markings: Polygon[] | null }) {
 export default function Road({ roadData }: { roadData: RoadData }) {
   return (
     <>
-      <Ground bounds={roadData.bounds} />
+      <Ground />
       <RoadPolygons polygons={roadData.polygons} />
       <MarkingPolygons markings={roadData.markings} />
     </>

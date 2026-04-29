@@ -44,7 +44,18 @@ export default function Scene({ sceneId }: { sceneId: string }) {
       className="w-[1920px] h-[1080px]" // for video recording
       onCreated={({ gl }) => setGL(gl)} // for video recording
     >
-      <ambientLight intensity={2.0} />
+      <color attach="background" args={["#cef1ff"]} />
+      <hemisphereLight
+        intensity={0.9}
+        color="#dff4ff"
+        groundColor="#b8c39a"
+      />
+      <directionalLight
+        position={[120, 180, 80]}
+        intensity={0.5}
+        color="#fff6e6"
+      />
+      <ambientLight intensity={0.7} />
       <CameraController roadBounds={roadData?.bounds ?? null} />
       <Road roadData={roadData ?? EMPTY_ROAD_DATA} />
       <VehicleMeshes />
