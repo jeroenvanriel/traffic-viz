@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
-import { Vector3, Euler, Quaternion, Object3D } from 'three';
+import { Box3, CanvasTexture, DoubleSide, Euler, Object3D, Quaternion, Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useVehicleStore, type VehicleState } from '../stores/VehicleStore';
 import { useReplayController } from '../stores/ReplayController';
@@ -21,17 +21,80 @@ function getTarget(v: VehicleState) {
   return { pos: targetPos, quat: targetQuat };
 }
 
+function createShadowTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return null;
+  }
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.filter = "blur(10px)";
+  context.fillStyle = "rgba(0, 0, 0, 0.35)";
+  context.beginPath();
+  context.roundRect(18, 30, 92, 68, 18);
+  context.fill();
+
+  const texture = new CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function VehicleShadow({ size, position }: { size: [number, number]; position: [number, number, number] }) {
+  const shadowTexture = useMemo(createShadowTexture, []);
+
+  if (!shadowTexture) return null;
+
+  return (
+    <mesh
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={position}
+      scale={[size[0], size[1], 1]}
+    >
+      <planeGeometry args={[1, 1]} />
+      <meshBasicMaterial
+        map={shadowTexture}
+        transparent
+        opacity={0.55}
+        depthWrite={false}
+        side={DoubleSide}
+      />
+    </mesh>
+  );
+}
+
 function VehicleModel({ modelUrl, transformConfig }: { modelUrl: string; transformConfig: TransformConfig }) {
   const { scene } = useGLTF(modelUrl);
   const clonedScene = useMemo(() => scene.clone(true), [scene]);
 
+  // Compute bounds after applying rotation and scale.
+  const transformedBounds = useMemo(() => {
+    const modelCopy = clonedScene.clone(true);
+    modelCopy.rotation.set(...transformConfig.rotation);
+    modelCopy.scale.set(...transformConfig.scale);
+    modelCopy.updateMatrixWorld(true);
+
+    const bounds = new Box3().setFromObject(modelCopy);
+    const size = bounds.getSize(new Vector3());
+    const center = bounds.getCenter(new Vector3());
+    return {
+      size: [size.x, size.z] as [number, number],
+      position: [center.x, bounds.min.y + 0.015, center.z] as [number, number, number],
+    };
+  }, [clonedScene, transformConfig.rotation, transformConfig.scale]);
+
+  const shadowSize = useMemo(() => {
+    return [transformedBounds.size[0] * 1.8, transformedBounds.size[1] * 1.8] as [number, number];
+  }, [transformedBounds.size]);
+
   return (
-    <primitive
-      object={clonedScene}
-      scale={transformConfig.scale}
-      rotation={transformConfig.rotation}
-      position={transformConfig.offset}
-    />
+    <group position={transformConfig.offset}>
+      <VehicleShadow size={shadowSize} position={transformedBounds.position} />
+      <primitive object={clonedScene} scale={transformConfig.scale} rotation={transformConfig.rotation} />
+    </group>
   );
 }
 
@@ -100,10 +163,13 @@ export default function VehicleMeshes() {
             {modelEntry?.url ? (
               <VehicleModel modelUrl={modelEntry.url} transformConfig={modelEntry.transform_config} />
             ) : (
-              <mesh position={[0, 0.5, 0]} rotation={[0, 0, 0]}>
-                <boxGeometry args={[1.5, 1, 4]} />
-                <meshStandardMaterial color="red" />
-              </mesh>
+              <group>
+                <VehicleShadow size={[1.65, 4.2]} position={[0, 0.015, 0]} />
+                <mesh position={[0, 0.5, 0]} rotation={[0, 0, 0]}>
+                  <boxGeometry args={[1.5, 1, 4]} />
+                  <meshStandardMaterial color="red" />
+                </mesh>
+              </group>
             )}
           </group>
         );
