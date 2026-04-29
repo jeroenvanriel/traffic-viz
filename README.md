@@ -3,6 +3,8 @@
 Replay traffic simulations using [SUMO network files](https://sumo.dlr.de/docs/Networks/SUMO_Road_Networks.html) and [SUMO floating car data](https://sumo.dlr.de/docs/Simulation/Output/FCDOutput.html).
 Interactive web-based visualization with support for custom 3D vehicle models and programmable camera movement. Some experimental supports for recording high-quality videos of the visualizations directly from the browser.
 
+![Video preview](./video.gif)
+
 
 ## ✨ Features
 
