@@ -31,7 +31,7 @@ Each scene is defined by a folder inside the `scenes/` directory. A valid scene 
 Follow SUMO's [Hello World](https://sumo.dlr.de/docs/Tutorials/Hello_World.html) tutorial to create a simple SUMO simulation. Make sure to use `road.net.xml` as the name for the network file.
 After verifying that the simulation runs in `sumo-gui`, use the command `sumo -c helloWorld.sumocfg --fcd-output fcd.xml` to create a floating car data export of the simulation; see [FCDOutput](https://sumo.dlr.de/docs/Simulation/Output/FCDOutput.html) for more information.
 
-> 💡 **Tip:** Instead of using the graphical [`netedit`](https://sumo.dlr.de/docs/Netedit/index.html) tool, you can also use the [osmWebWizard.py](https://sumo.dlr.de/docs/Tools/Import/OSM.html) script, included with SUMO, to easily create realistic traffic scenarios by importing map data from OpenStreetMap. For more information, see the [OpenStreetMap import documentation](https://sumo.dlr.de/docs/Networks/Import/OpenStreetMap.html).
+> 💡 **Tip:** Instead of using the graphical [`netedit`](https://sumo.dlr.de/docs/Netedit/index.html) tool, you can also use the [osmWebWizard.py](https://sumo.dlr.de/docs/Tools/Import/OSM.html) script, included with SUMO, to easily create realistic traffic scenarios by importing map data from OpenStreetMap[^openstreetmap-attribution-error]. For more information, see the [OpenStreetMap import documentation](https://sumo.dlr.de/docs/Networks/Import/OpenStreetMap.html).
 
 ### Importing custom vehicle models
 
@@ -76,3 +76,6 @@ This project was heavily inspired by the ideas and design of
 [SUMO‑Web3D](https://github.com/sidewalklabs/sumo-web3d) 
 by Sidewalk Labs (licensed under the Eclipse Public License v2.0).
 Early development of this project was funded by [NWO](https://www.nwo.nl/en) as part of ["Implementing Stochastic Models for Intersections with Regulated Traffic" (ISMIRT)](https://www.nwo.nl/en/projects/43920616) and a preliminary version of the visualization was presented during the ["ISMIRT Workshop on Urban Traffic Management and Control"](https://www.utwente.nl/en/eemcs/sor/events/symposia/220610_ISMIRT%20workshop%20on%20Urban%20Traffic%20Management%20and%20control/).
+
+
+[^openstreetmap-attribution-error]: Last time I tried to use this tool, I noticed that the OpenStreetMap API replaces some map blocks with warning images, caused by a lack of proper attribution. It may well be that this issue has been fixed in a current version of SUMO.
