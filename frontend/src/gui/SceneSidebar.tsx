@@ -10,7 +10,7 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 import PlaybackControls from "./PlaybackControls";
 import CanvasRecorderPanel from "./CanvasRecorderPanel";
-import SaveInitCameraButton from "./CameraPanel";
+import SaveInitCameraButton, { TopDownCameraButton } from "./CameraPanel";
 import VehicleTypesPanel from "./VehicleTypesPanel";
 import { CameraSequenceList } from "../components/CameraSequenceList";
 import type { CameraTimelineEditorBindings } from "./CameraTimelineEditor";
@@ -220,8 +220,14 @@ export default function SceneSidebar({
 
           <div className="bg-gray-50 p-4">
             {activeTab === "playback" && (
-              <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                <PlaybackControls />
+              <section className="space-y-4">
+                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                  <PlaybackControls />
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3 shadow-sm">
+                  <h3 className="text-sm font-semibold text-gray-900">View Controls</h3>
+                  <TopDownCameraButton />
+                </div>
               </section>
             )}
 

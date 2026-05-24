@@ -8,6 +8,7 @@ type CameraStore = {
   setControlsRef: (controls: any) => void;
 
   moveCamera: (pos: three.Vector3, target: three.Vector3) => void;
+  orientTopDown: () => void;
   
   currentSequence: string | null;
   setCurrentSequence: (next: string | null) => void;
@@ -32,6 +33,21 @@ export const useCameraStore = create<CameraStore>((set, get) => ({
 
     // sync controls
     ctr.target.copy(target);
+    ctr.update();
+  },
+
+  orientTopDown: () => {
+    const cam = get().camera;
+    const ctr = get().controls;
+    if (!cam || !ctr) return;
+
+    const nextTarget = ctr.target.clone();
+    const distance = Math.max(cam.position.distanceTo(nextTarget), 18);
+
+    cam.position.set(nextTarget.x, nextTarget.y + distance, nextTarget.z);
+    cam.updateMatrix();
+
+    ctr.target.copy(nextTarget);
     ctr.update();
   },
 
