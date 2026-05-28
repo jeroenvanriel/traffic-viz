@@ -7,18 +7,10 @@ import { useReplayController } from '../stores/ReplayController';
 import { useVehicleTypeStore, type TransformConfig } from '../stores/VehicleTypeStore';
 
 function getTarget(v: VehicleState) {
-  // target position/orientation
-  const targetPos = new Vector3(v.x, v.y, v.z);
   // additional rotation of 180deg to make +Z axis the model's forward direction,
   // necessary due to differences with SUMO's coordinate system
-  const targetQuat = new Quaternion().setFromEuler(new Euler(0, v.r + Math.PI, 0));
-
-  // direction vector = vehicle forward direction
-  const forward = new Vector3(0, 0, 1);
-  forward.applyEuler(new Euler(0, v.r, 0));   // rotate forward vector
-  targetPos.add(forward);
-
-  return { pos: targetPos, quat: targetQuat };
+  const targetQuat = new Quaternion().setFromEuler(new Euler(Math.PI / 2, -v.r, 0));
+  return { pos: new Vector3(v.x, v.y, v.z), quat: targetQuat };
 }
 
 function createShadowTexture() {
@@ -33,7 +25,7 @@ function createShadowTexture() {
 
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.filter = "blur(10px)";
-  context.fillStyle = "rgba(0, 0, 0, 0.35)";
+  context.fillStyle = "rgba(0, 0, 0, 0.95)";
   context.beginPath();
   context.roundRect(18, 30, 92, 68, 18);
   context.fill();
@@ -51,7 +43,7 @@ function VehicleShadow({ size, position }: { size: [number, number]; position: [
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
-      position={[position[0], 0.02, position[2]]}
+      position={[position[0], position[1] + 0.1, position[2]]} // slight offset above the ground to prevent z-fighting
       scale={[size[0], size[1], 1]}
     >
       <planeGeometry args={[1, 1]} />
@@ -236,9 +228,9 @@ export default function VehicleMeshes() {
               <VehicleModel modelUrl={modelEntry.url} transformConfig={modelEntry.transform_config} />
             ) : (
               <group>
-                <VehicleShadow size={[1.65, 4.2]} position={[0, 0.015, 0]} />
+                <VehicleShadow size={[1.65, 4.2]} position={[0, 0, 0.015]} />
                 <mesh position={[0, 0.5, 0]} rotation={[0, 0, 0]}>
-                  <boxGeometry args={[1.5, 1, 4]} />
+                  <boxGeometry args={[1.5, 4, 1]} />
                   <meshStandardMaterial color="red" />
                 </mesh>
               </group>

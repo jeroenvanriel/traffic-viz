@@ -12,14 +12,14 @@ const CAMERA_STEP_LERP_ALPHA = 0.2;
 
 function computeCornerView(bounds: Bounds, fovDeg: number): { position: Vector3; target: Vector3 } {
   const centerX = (bounds.minx + bounds.maxx) / 2;
-  const centerZ = (bounds.miny + bounds.maxy) / 2;
+  const centerY = (bounds.miny + bounds.maxy) / 2;
   const maxDimension = Math.max(bounds.maxx - bounds.minx, bounds.maxy - bounds.miny);
   const fovRad = (fovDeg * Math.PI) / 180;
   const distance = ((maxDimension / 2) / Math.tan(fovRad / 2)) * 1.35;
 
   return {
-    position: new Vector3(centerX - distance * 0.9, Math.max(distance * 0.85, 18), centerZ - distance * 0.9),
-    target: new Vector3(centerX, 0, centerZ),
+    position: new Vector3(centerX - distance * 0.9, centerY - distance * 0.9, Math.max(distance * 0.85, 18)),
+    target: new Vector3(centerX, centerY, 0),
   };
 }
 
@@ -33,7 +33,11 @@ export default function CameraController({ roadBounds }: { roadBounds: Bounds | 
   useEffect(() => {
       camera.near = 0.5;
       camera.far = 100000;
+      // Align with deck.gl coordinate system where +Z is up
+      camera.up.set(0, 0, 1);
+      camera.updateMatrixWorld(true);
       camera.updateProjectionMatrix();
+      controls.current?.update();
     }, [camera]);
 
   // once on mount, store controls ref globally
@@ -92,9 +96,9 @@ export default function CameraController({ roadBounds }: { roadBounds: Bounds | 
   useEffect(() => {
     if (!controls.current) return;
 
-    controls.current.maxPolarAngle = Math.PI / 2 - 0.05;
     controls.current.minPolarAngle = 0;
-    controls.current.target.y = Math.max(controls.current.target.y, minHeight);
+    controls.current.maxPolarAngle = Math.PI / 2 - 0.05;
+    controls.current.target.z = 0;
   }, []);
 
   const lastAppliedStepRef = useRef<number | null>(null);
@@ -102,19 +106,21 @@ export default function CameraController({ roadBounds }: { roadBounds: Bounds | 
 
   const interpolateKeyframes = (from: CameraKeyframe, to: CameraKeyframe, t: number) => {
     camera.position.lerpVectors(from.position, to.position, t);
-    camera.updateMatrix();
+    camera.position.z = Math.max(camera.position.z, minHeight);
+    camera.updateMatrixWorld(true);
     const currentTarget = new Vector3().lerpVectors(from.target, to.target, t);
-    currentTarget.y = Math.max(currentTarget.y, minHeight);
+    currentTarget.z = 0;
     controls.current.target.copy(currentTarget);
     controls.current.update();
   };
 
   const applyKeyframePose = (keyframe: CameraKeyframe) => {
     camera.position.copy(keyframe.position);
-    camera.updateMatrix();
+    camera.position.z = Math.max(camera.position.z, minHeight);
+    camera.updateMatrixWorld(true);
 
     const clampedTarget = new Vector3().copy(keyframe.target);
-    clampedTarget.y = Math.max(clampedTarget.y, minHeight);
+    clampedTarget.z = 0;
     controls.current.target.copy(clampedTarget);
     controls.current.update();
   };
@@ -144,10 +150,11 @@ export default function CameraController({ roadBounds }: { roadBounds: Bounds | 
       const targetCurve = new CatmullRomCurve3(keyframes.map((k) => k.target.clone()));
 
       camera.position.copy(positionCurve.getPoint(t));
-      camera.updateMatrix();
+      camera.position.z = Math.max(camera.position.z, minHeight);
+      camera.updateMatrixWorld(true);
 
       const splineTarget = targetCurve.getPoint(t);
-      splineTarget.y = Math.max(splineTarget.y, minHeight);
+      splineTarget.z = 0;
       controls.current.target.copy(splineTarget);
       controls.current.update();
       return;

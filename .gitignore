@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 build
+.vite
 *.local
 __pycache__/
 *.egg-info/

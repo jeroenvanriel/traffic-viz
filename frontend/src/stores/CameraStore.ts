@@ -29,7 +29,7 @@ export const useCameraStore = create<CameraStore>((set, get) => ({
 
     // sync camera
     cam.position.copy(pos);
-    cam.updateMatrix();
+    cam.updateMatrixWorld(true);
 
     // sync controls
     ctr.target.copy(target);
@@ -42,10 +42,11 @@ export const useCameraStore = create<CameraStore>((set, get) => ({
     if (!cam || !ctr) return;
 
     const nextTarget = ctr.target.clone();
+    console.log(nextTarget);
     const distance = Math.max(cam.position.distanceTo(nextTarget), 18);
 
-    cam.position.set(nextTarget.x, nextTarget.y + distance, nextTarget.z);
-    cam.updateMatrix();
+    cam.position.set(nextTarget.x, nextTarget.y, nextTarget.z + distance);
+    cam.updateMatrixWorld(true);
 
     ctr.target.copy(nextTarget);
     ctr.update();

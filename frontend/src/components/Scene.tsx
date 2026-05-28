@@ -2,7 +2,7 @@ import { useThreeStore } from "../stores/ThreeStore";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useState } from "react";
 import CameraController from "./CameraController";
-import Road, { type RoadData } from "./Road";
+import Road, { Ground, type RoadData } from "./Road";
 import VehicleMeshes from "./VehicleMeshes";
 
 const EMPTY_ROAD_DATA: RoadData = {
@@ -57,8 +57,9 @@ export default function Scene({ sceneId }: { sceneId: string }) {
       />
       <ambientLight intensity={0.7} />
       <CameraController roadBounds={roadData?.bounds ?? null} />
-      <Road roadData={roadData ?? EMPTY_ROAD_DATA} />
       <VehicleMeshes />
+      <Road roadData={roadData ?? EMPTY_ROAD_DATA} />
+      <Ground />
     </Canvas>
   )
 }
