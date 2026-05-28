@@ -99,10 +99,8 @@ function VehicleModel({ modelUrl, transformConfig }: { modelUrl: string; transfo
     bounds.expandByObject(wheelNodes[0]); 
 
     bounds.getSize(size);
-    console.log("Wheel bounds size:", size);
     const radius = Math.max(Math.max(size.x * transformConfig.scale[0], size.y * transformConfig.scale[1], size.z * transformConfig.scale[2]) / 2, 0.15);
 
-    console.log(radius)
     return radius;
   }, [wheelNodes, transformConfig.scale]);
 
