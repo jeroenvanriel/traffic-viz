@@ -108,10 +108,15 @@ def seams_have_opposite_direction(centerline_a: LineString, centerline_b: LineSt
 
 
 def compute_opposite_direction_markings(lane_records, marking_width=0.2):
-    """Compute marking polygons for seams between opposite-direction lanes."""
+    """Compute opposite-direction markings and debug geometry layers."""
     markings = []
+    debug_layers = {
+        "debug_band_a": [],
+        "debug_band_b": [],
+        "debug_overlap": [],
+    }
     if len(lane_records) < 2:
-        return []
+        return markings, debug_layers
     
     # Build spatial index on lane polygons
     polys = [rec["polygon"] for rec in lane_records]
@@ -125,6 +130,8 @@ def compute_opposite_direction_markings(lane_records, marking_width=0.2):
         
         # Find candidate neighbors via spatial index
         candidates = tree.query(poly_a.envelope.buffer(SEAM_DETECTION_EPSILON * 2))
+
+        band_a = poly_a.boundary.buffer(SEAM_DETECTION_EPSILON, cap_style=2, join_style=2)
         
         for j in candidates:
             if i >= j or (i, j) in processed:
@@ -138,8 +145,16 @@ def compute_opposite_direction_markings(lane_records, marking_width=0.2):
             # Skip same-edge pairs (handled by compute_lane_markings)
             if rec_a["edge_id"] == rec_b["edge_id"]:
                 continue
+
+            poly_b = rec_b["polygon"]
+            band_b = poly_b.boundary.buffer(SEAM_DETECTION_EPSILON, cap_style=2, join_style=2)
+
+            debug_layers["debug_band_a"].append(band_a)
+            debug_layers["debug_band_b"].append(band_b)
             
             # Find robust shared seams
+            overlap = band_a.intersection(band_b)
+            debug_layers["debug_overlap"].extend(iter_polygons(overlap))
             seams = robust_shared_boundary(poly_a, poly_b, SEAM_DETECTION_EPSILON)
             
             for seam in seams:
@@ -157,4 +172,4 @@ def compute_opposite_direction_markings(lane_records, marking_width=0.2):
                         )
                         markings.extend(dashes)
     
-    return markings
+    return markings, debug_layers

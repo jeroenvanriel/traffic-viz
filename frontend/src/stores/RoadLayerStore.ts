@@ -6,6 +6,16 @@ export const DEFAULT_LAYER_VISIBILITY: Record<string, boolean> = {
   opposite_markings: true,
 };
 
+const DEBUG_LAYER_PREFIX = "debug_";
+
+export function getDefaultLayerVisibility(layerId: string): boolean {
+  if (layerId in DEFAULT_LAYER_VISIBILITY) {
+    return DEFAULT_LAYER_VISIBILITY[layerId];
+  }
+
+  return !layerId.startsWith(DEBUG_LAYER_PREFIX);
+}
+
 type RoadLayerStore = {
   availableLayers: string[];
   layerVisibility: Record<string, boolean>;
@@ -33,10 +43,8 @@ export const useRoadLayerStore = create<RoadLayerStore>((set) => ({
       for (const layerId of layerIds) {
         if (layerId in state.layerVisibility) {
           nextVisibility[layerId] = state.layerVisibility[layerId];
-        } else if (layerId in DEFAULT_LAYER_VISIBILITY) {
-          nextVisibility[layerId] = DEFAULT_LAYER_VISIBILITY[layerId];
         } else {
-          nextVisibility[layerId] = true;
+          nextVisibility[layerId] = getDefaultLayerVisibility(layerId);
         }
       }
 
