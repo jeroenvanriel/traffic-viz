@@ -1,4 +1,6 @@
 import * as three from "three";
+import { Line } from "@react-three/drei";
+import { useRoadLayerStore } from "../stores/RoadLayerStore";
 
 export type Point = { x: number; y: number; z?: number };
 
@@ -11,10 +13,35 @@ export type Polygon = {
 
 export type Bounds = { minx: number, miny: number, maxx: number, maxy: number };
 
+export type LayerKind = "polygon" | "path";
+
+export interface RoadLayer {
+  kind: LayerKind;
+  polygons?: Polygon[];
+  paths?: Path[];
+}
+
 export interface RoadData {
-  polygons: Polygon[];
-  markings: Polygon[];
+  layers: Record<string, RoadLayer>;
   bounds: Bounds;
+};
+
+type LayerStyle = {
+  color: three.ColorRepresentation;
+  yOffset: number;
+  side?: three.Side;
+};
+
+const LAYER_STYLES: Record<string, LayerStyle> = {
+  road: { color: "darkgrey", yOffset: 0, side: three.DoubleSide },
+  edge_markings: { color: "white", yOffset: 0.01, side: three.DoubleSide },
+  opposite_markings: { color: "#ffd84d", yOffset: 0.015, side: three.DoubleSide },
+};
+
+const FALLBACK_LAYER_STYLE: LayerStyle = {
+  color: "white",
+  yOffset: 0,
+  side: three.DoubleSide,
 };
 
 function Ground() {
@@ -55,7 +82,7 @@ function polygonToShape(polygon: Polygon) {
   return shape;
 }
 
-function RoadPolygons({ polygons }: { polygons: Polygon[] }) {
+function PolygonLayer({ polygons, style }: { polygons: Polygon[]; style: LayerStyle }) {
   return (
     <>
       {polygons.map((poly, idx) => {
@@ -67,10 +94,10 @@ function RoadPolygons({ polygons }: { polygons: Polygon[] }) {
             key={idx}
             geometry={geometry}
             rotation={[Math.PI / 2, 0, 0]} // lay flat on XZ-plane
-            position={[0, 0, 0]}
+            position={[0, style.yOffset, 0]}
             receiveShadow
           >
-            <meshStandardMaterial color="darkgrey" side={three.DoubleSide} />
+            <meshStandardMaterial color={style.color} side={style.side ?? three.DoubleSide} />
           </mesh>
         );
       })}
@@ -78,37 +105,52 @@ function RoadPolygons({ polygons }: { polygons: Polygon[] }) {
   );
 }
 
-function MarkingPolygons({ markings }: { markings: Polygon[] | null }) {
-  if (!markings) return null;
-
+function PathLayer({ paths, style }: { paths: Path[]; style: LayerStyle }) {
   return (
     <>
-      {markings.map((poly, idx) => {
-        const shape = polygonToShape(poly);
-        const geometry = new three.ShapeGeometry(shape);
+      {paths.map((path, idx) => {
+        if (path.length < 2) return null;
+        const points = path.map((p) => new three.Vector3(p.x, style.yOffset, p.y));
 
         return (
-          <mesh
-            key={idx}
-            geometry={geometry}
-            rotation={[Math.PI / 2, 0, 0]}
-            position={[0, 0.01, 0]}
-            receiveShadow
-          >
-            <meshStandardMaterial color="white" side={three.DoubleSide} />
-          </mesh>
+          <Line key={idx} points={points} color={style.color as string} />
         );
       })}
     </>
   );
 }
 
-export default function Road({ roadData }: { roadData: RoadData }) {
+function LayerRenderer({ layerId, layer }: { layerId: string; layer: RoadLayer }) {
+  const style = LAYER_STYLES[layerId] ?? FALLBACK_LAYER_STYLE;
+
+  if (layer.kind === "polygon") {
+    return <PolygonLayer polygons={layer.polygons ?? []} style={style} />;
+  }
+
+  if (layer.kind === "path") {
+    return <PathLayer paths={layer.paths ?? []} style={style} />;
+  }
+
+  return null;
+}
+
+export default function Road({
+  roadData,
+}: {
+  roadData: RoadData;
+}) {
+  const layerVisibility = useRoadLayerStore((s) => s.layerVisibility);
+
   return (
     <>
       <Ground />
-      <RoadPolygons polygons={roadData.polygons} />
-      <MarkingPolygons markings={roadData.markings} />
+      {Object.entries(roadData.layers).map(([layerId, layer]) => {
+        if (layerVisibility[layerId] === false) {
+          return null;
+        }
+
+        return <LayerRenderer key={layerId} layerId={layerId} layer={layer} />;
+      })}
     </>
   );
 }

@@ -21,10 +21,16 @@ async def get_road_network(scene_id: str):
     cache_key = compute_cache_key(road_file)
 
     # --- Inspect cache ---
-    polygons = load_cache(scene_id, "polygons", cache_key)
+    road_layer = load_cache(scene_id, "road", cache_key)
     bounds = load_cache(scene_id, "bounds", cache_key)
-    markings = load_cache(scene_id, "markings", cache_key)
-    if polygons is None or bounds is None or markings is None or True: # TODO: remove "or True" to enable caching
+    edge_markings_layer = load_cache(scene_id, "edge_markings", cache_key)
+    opposite_markings_layer = load_cache(scene_id, "opposite_markings", cache_key)
+    if (
+        road_layer is None
+        or bounds is None
+        or edge_markings_layer is None
+        or opposite_markings_layer is None
+    ):
         # --- Construct lane records ---
         # (containing geometry and metadata for reuse in opposite markings computation)
         lane_records = build_lane_records(root)
@@ -43,14 +49,28 @@ async def get_road_network(scene_id: str):
         opposite_markings = compute_opposite_direction_markings(lane_records)
 
         # --- Serialize and cache results ---
-        polygons = serialize_polygons(all_polys)
-        markings = serialize_polygons(edge_markings + lane_markings + opposite_markings)
-        save_cache(scene_id, "polygons", cache_key, polygons)
-        save_cache(scene_id, "markings", cache_key, markings)
+        road_layer = serialize_polygons(all_polys)
+        edge_markings_layer = serialize_polygons(edge_markings + lane_markings)
+        opposite_markings_layer = serialize_polygons(opposite_markings)
+        save_cache(scene_id, "road", cache_key, road_layer)
+        save_cache(scene_id, "edge_markings", cache_key, edge_markings_layer)
+        save_cache(scene_id, "opposite_markings", cache_key, opposite_markings_layer)
         save_cache(scene_id, "bounds", cache_key, bounds)
 
     return {
-        "polygons": polygons,
-        "markings": markings,
+        "layers": {
+            "road": {
+                "kind": "polygon",
+                "polygons": road_layer,
+            },
+            "edge_markings": {
+                "kind": "polygon",
+                "polygons": edge_markings_layer,
+            },
+            "opposite_markings": {
+                "kind": "polygon",
+                "polygons": opposite_markings_layer,
+            },
+        },
         "bounds": bounds,
     }

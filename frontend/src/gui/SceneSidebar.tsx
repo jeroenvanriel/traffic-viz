@@ -12,6 +12,7 @@ import PlaybackControls from "./PlaybackControls";
 import CanvasRecorderPanel from "./CanvasRecorderPanel";
 import SaveInitCameraButton, { TopDownCameraButton } from "./CameraPanel";
 import VehicleTypesPanel from "./VehicleTypesPanel";
+import LayerVisibilityPanel from "./LayerVisibilityPanel";
 import { CameraSequenceList } from "../components/CameraSequenceList";
 import type { CameraTimelineEditorBindings } from "./CameraTimelineEditor";
 
@@ -228,6 +229,7 @@ export default function SceneSidebar({
                   <h3 className="text-sm font-semibold text-gray-900">View Controls</h3>
                   <TopDownCameraButton />
                 </div>
+                <LayerVisibilityPanel />
               </section>
             )}
 
@@ -267,7 +269,6 @@ export default function SceneSidebar({
                     <SaveInitCameraButton />
                   </div>
                 </div>
-
                 <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                   <VehicleTypesPanel />
                 </div>

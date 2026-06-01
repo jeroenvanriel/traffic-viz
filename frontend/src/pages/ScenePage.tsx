@@ -12,6 +12,7 @@ import { useReplayController } from "../stores/ReplayController";
 import { useKeyframeStore } from "../stores/KeyframeStore";
 import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
 import { useVehicleTypeStore, useVehicleTypeSync } from "../stores/VehicleTypeStore";
+import { useRoadLayerStore } from "../stores/RoadLayerStore";
 
 function resetAllReplayStores() {
   useVehicleStore.getState().reset();
@@ -31,6 +32,7 @@ export default function ScenePage() {
   const isMapInteractingRef = useRef(false);
   const [autoHideEnabled, setAutoHideEnabled] = useState(false);
   const [isUiVisible, setIsUiVisible] = useState(true);
+  const resetRoadLayers = useRoadLayerStore((s) => s.reset);
   const replayMaxStep = info ? info.nSteps - 1 : 0;
   const cameraTimeline = useCameraTimelineEditor(replayMaxStep, timelineRef);
 
@@ -45,6 +47,10 @@ export default function ScenePage() {
     void loadSequences(sceneId);
     void loadSceneSettings(sceneId);
   }, [sceneId, load, loadSequences, loadSceneSettings]);
+
+  useEffect(() => {
+    resetRoadLayers();
+  }, [sceneId, resetRoadLayers]);
 
   useEffect(() => {
     const clearHideTimer = () => {
