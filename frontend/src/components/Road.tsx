@@ -1,4 +1,5 @@
 import * as three from "three";
+import { useEffect } from "react";
 import { useRoadStore, usePolygonSelectionStore } from "../stores/RoadStore";
 import type { RoadLayer, Polygon } from "../stores/RoadStore";
 
@@ -75,12 +76,14 @@ function PolygonLayer({
   const selectedPolygon = usePolygonSelectionStore((s) => s.selectedPolygon);
   const setSelectedPolygon = usePolygonSelectionStore((s) => s.setSelectedPolygon);
   const clearSelectedPolygon = usePolygonSelectionStore((s) => s.clearSelectedPolygon);
+  const hiddenShapes = useRoadStore(s => s.hiddenShapes[layerId]);
 
   const style = LAYER_STYLES[layerId] ?? FALLBACK_LAYER_STYLE;
 
   return (
     <>
       {layer.shapes?.map((shape, idx) => {
+        if (hiddenShapes?.has(idx)) return null;
         const polygon = shape.polygon;
         const geometry = new three.ShapeGeometry(polygonToShape(polygon));
         const isSelected =
@@ -125,11 +128,57 @@ function PolygonLayer({
   );
 }
 
+function usePolygonDeleteShortcut() {
+  const selectedPolygon = usePolygonSelectionStore(
+    s => s.selectedPolygon
+  );
+
+  const clearSelectedPolygon =
+    usePolygonSelectionStore(
+      s => s.clearSelectedPolygon
+    );
+
+  const hideShape = useRoadStore(
+    s => s.hideShape
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Delete") return;
+      if (!selectedPolygon) return;
+
+      hideShape(
+        selectedPolygon.layerId,
+        selectedPolygon.polygonIndex
+      );
+
+      clearSelectedPolygon();
+    };
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [
+    selectedPolygon,
+    hideShape,
+    clearSelectedPolygon,
+  ]);
+}
 
 export default function Road() {
   const layers = useRoadStore(s => s.layers);
   const debugLayers = useRoadStore(s => s.debugLayers);
   const layerVisibility = useRoadStore(s => s.layerVisibility);
+
+  usePolygonDeleteShortcut();
 
   return (
     <>

@@ -38,27 +38,31 @@ type RoadStore = {
   bounds: RoadBounds;
   layers: Record<string, RoadLayer>;
   debugLayers: Record<string, RoadLayer>;
-  layerVisibility: Record<string, boolean>;
   loading: boolean;
+  layerVisibility: Record<string, boolean>;
+  hiddenShapes: Record<string, Set<number>>;
   reset: () => void;
   load: (sceneId: string) => Promise<void>;
   setLayerVisibility: (layerId: string, visible: boolean) => void;
+  hideShape: (layerId: string, polygonIndex: number) => void;
 };
 
 export const useRoadStore = create<RoadStore>((set) => ({
   bounds: DEFAULT_BOUNDS,
   layers: {},
   debugLayers: {},
-  layerVisibility: {},
-
   loading: false,
+  layerVisibility: {},
+  hiddenShapes: {},
 
   reset: () => {
     set({
       bounds: DEFAULT_BOUNDS,
       layers: {},
       debugLayers: {},
+      loading: false,
       layerVisibility: {},
+      hiddenShapes: {},
     });
   },
 
@@ -98,7 +102,25 @@ export const useRoadStore = create<RoadStore>((set) => ({
         ...state.layerVisibility,
         [layerId]: visible,
       },
+      // Reset hidden shapes for this layer when toggling visibility
+      hiddenShapes: {
+        ...state.hiddenShapes,
+        [layerId]: new Set<number>(),
+      }
     }));
+  },
+
+  hideShape: (layerId, polygonIndex) => {
+    set((state) => {
+      const current = state.hiddenShapes[layerId] ?? new Set<number>();
+
+      return {
+        hiddenShapes: {
+          ...state.hiddenShapes,
+          [layerId]: new Set([...current, polygonIndex]),
+        },
+      };
+    });
   },
 }));
 
