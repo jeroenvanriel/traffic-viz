@@ -5,6 +5,7 @@ import {
   CameraIcon,
   Cog6ToothIcon,
   PlayIcon,
+  MapIcon 
 } from "@heroicons/react/24/outline";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
@@ -17,7 +18,7 @@ import PolygonMetadataPanel from "./PolygonMetadataPanel";
 import { CameraSequenceList } from "../components/CameraSequenceList";
 import type { CameraTimelineEditorBindings } from "./CameraTimelineEditor";
 
-type SidebarTab = "playback" | "camera" | "settings";
+type SidebarTab = "playback" | "road" | "camera" | "settings";
 const SIDEBAR_BOTTOM_INSET_PX = 130;
 const MIN_SCROLLBAR_THUMB_HEIGHT_PX = 14;
 const SCROLLBAR_TRACK_INSET_PX = 8;
@@ -198,12 +199,18 @@ export default function SceneSidebar({
           </div>
 
           <div className="border-b border-gray-200 bg-gray-100 px-4">
-            <div className="grid grid-cols-3 rounded-lg bg-gray-100 p-1">
+            <div className="grid grid-cols-4 rounded-lg bg-gray-100 p-1">
               <TabButton
                 active={activeTab === "playback"}
                 label="Playback"
                 icon={<PlayIcon className="h-5 w-5" />}
                 onClick={() => setActiveTab("playback")}
+              />
+              <TabButton
+                active={activeTab === "road"}
+                label="Road"
+                icon={<MapIcon className="h-5 w-5" />}
+                onClick={() => setActiveTab("road")}
               />
               <TabButton
                 active={activeTab === "camera"}
@@ -230,6 +237,11 @@ export default function SceneSidebar({
                   <h3 className="text-sm font-semibold text-gray-900">View Controls</h3>
                   <TopDownCameraButton />
                 </div>
+              </section>
+            )}
+
+            {activeTab === "road" && (
+              <section className="space-y-4">
                 <LayerVisibilityPanel />
                 <PolygonMetadataPanel />
               </section>
