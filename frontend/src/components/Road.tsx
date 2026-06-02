@@ -31,7 +31,7 @@ function Ground() {
       scale={[5000, 5000, 5000]}
       receiveShadow
       onClick={(event) => {
-        if (event.delta > 2) return;
+        if (event.delta > 2) return; // Only trigger click if it's not part of a drag (delta is the distance the mouse moved since the last click)
         clearSelectedPolygon();
       }}
     >
@@ -95,7 +95,7 @@ function PolygonLayer({
             receiveShadow
             onClick={(event) => {
               // React Three Fiber click events are based on Three.js raycasting.
-              if (event.delta > 2) return;
+              if (event.delta > 2) return; // Only trigger click if it's not part of a drag (delta is the distance the mouse moved since the last click)
               event.stopPropagation();
               if (
                 selectedPolygon?.layerId === layerId &&
