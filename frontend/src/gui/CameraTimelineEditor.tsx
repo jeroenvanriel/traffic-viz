@@ -42,10 +42,6 @@ export type CameraTimelineEditorBindings = {
   timelineMaxStep: number;
 };
 
-function cloneVector(v: Vector3): Vector3 {
-  return new Vector3(v.x, v.y, v.z);
-}
-
 export function useCameraTimelineEditor(
   maxStep: number,
   timelineSvgRef: React.RefObject<SVGSVGElement | null>
@@ -173,8 +169,8 @@ export function useCameraTimelineEditor(
       updateKeyframePose(
         selectedSequence.id,
         keyframeId,
-        cloneVector(camera.position),
-        cloneVector(controls.target)
+        camera.position.clone(),
+        controls.target.clone()
       );
       notify("Keyframe pose updated.", { tone: "success", durationMs: 1800 });
       return;
@@ -200,8 +196,8 @@ export function useCameraTimelineEditor(
     const id = nanoid();
     upsertKeyframe(selectedSequence.id, {
       id,
-      position: cloneVector(camera.position),
-      target: cloneVector(controls.target),
+      position: camera.position.clone(),
+      target: controls.target.clone(),
       step,
     });
     setActiveKeyframeId(id);
