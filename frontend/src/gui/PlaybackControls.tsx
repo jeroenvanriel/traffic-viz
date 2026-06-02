@@ -1,4 +1,5 @@
 import { useReplayController } from "../stores/ReplayController";
+import { PlayIcon, PauseIcon } from "@heroicons/react/24/solid";
 
 export default function PlaybackControls() {
   const info = useReplayController((s) => s.info);
@@ -58,16 +59,18 @@ export default function PlaybackControls() {
           <button
             onClick={pause}
             title="Pause the simulation replay."
-            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium text-sm cursor-pointer"
+            className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium text-sm cursor-pointer"
           >
+            <PauseIcon className="h-4 w-4" />
             Pause (SPC)
           </button>
         ) : (
           <button
             onClick={play}
             title="Start the simulation replay."
-            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium text-sm cursor-pointer"
+            className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium text-sm cursor-pointer"
           >
+            <PlayIcon className="h-4 w-4" />
             Play (SPC)
           </button>
         )}
