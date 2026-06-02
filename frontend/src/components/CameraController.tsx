@@ -6,11 +6,11 @@ import { type CameraKeyframe, useKeyframeStore } from "../stores/KeyframeStore";
 import { useReplayController } from "../stores/ReplayController";
 import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
 import { CatmullRomCurve3, MathUtils, PerspectiveCamera, Vector3 } from "three";
-import type { Bounds } from "./Road";
+import { useRoadStore, type RoadBounds } from "../stores/RoadStore";
 
 const CAMERA_STEP_LERP_ALPHA = 0.2;
 
-function computeCornerView(bounds: Bounds, fovDeg: number): { position: Vector3; target: Vector3 } {
+function computeCornerView(bounds: RoadBounds, fovDeg: number): { position: Vector3; target: Vector3 } {
   const centerX = (bounds.minx + bounds.maxx) / 2;
   const centerZ = (bounds.miny + bounds.maxy) / 2;
   const maxDimension = Math.max(bounds.maxx - bounds.minx, bounds.maxy - bounds.miny);
@@ -23,11 +23,13 @@ function computeCornerView(bounds: Bounds, fovDeg: number): { position: Vector3;
   };
 }
 
-export default function CameraController({ roadBounds }: { roadBounds: Bounds | null }) {
+export default function CameraController() {
   const { setCameraRef, setControlsRef, moveCamera, currentSequence } = useCameraStore();
   const { camera } = useThree();
   const controls = useRef<any | null>(null);
   const autoInitAttemptedRef = useRef(false);
+
+  const roadBounds = useRoadStore(s => s.bounds);
 
   // camera settings
   useEffect(() => {

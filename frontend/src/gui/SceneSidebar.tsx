@@ -13,6 +13,7 @@ import CanvasRecorderPanel from "./CanvasRecorderPanel";
 import SaveInitCameraButton, { TopDownCameraButton } from "./CameraPanel";
 import VehicleTypesPanel from "./VehicleTypesPanel";
 import LayerVisibilityPanel from "./LayerVisibilityPanel";
+import PolygonMetadataPanel from "./PolygonMetadataPanel";
 import { CameraSequenceList } from "../components/CameraSequenceList";
 import type { CameraTimelineEditorBindings } from "./CameraTimelineEditor";
 
@@ -230,6 +231,7 @@ export default function SceneSidebar({
                   <TopDownCameraButton />
                 </div>
                 <LayerVisibilityPanel />
+                <PolygonMetadataPanel />
               </section>
             )}
 

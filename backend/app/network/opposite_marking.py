@@ -111,9 +111,9 @@ def compute_opposite_direction_markings(lane_records, marking_width=0.2):
     """Compute opposite-direction markings and debug geometry layers."""
     markings = []
     debug_layers = {
-        "debug_band_a": [],
-        "debug_band_b": [],
-        "debug_overlap": [],
+        "band_a": [],
+        "band_b": [],
+        "overlap": [],
     }
     if len(lane_records) < 2:
         return markings, debug_layers
@@ -149,12 +149,16 @@ def compute_opposite_direction_markings(lane_records, marking_width=0.2):
             poly_b = rec_b["polygon"]
             band_b = poly_b.boundary.buffer(SEAM_DETECTION_EPSILON, cap_style=2, join_style=2)
 
-            debug_layers["debug_band_a"].append(band_a)
-            debug_layers["debug_band_b"].append(band_b)
+            debug_layers["band_a"].append({ "polygon": band_a, "edge_id": rec_a["edge_id"], "lane_index": rec_a["lane_index"] })
+            debug_layers["band_b"].append({ "polygon": band_b, "edge_id": rec_b["edge_id"], "lane_index": rec_b["lane_index"] })
             
             # Find robust shared seams
             overlap = band_a.intersection(band_b)
-            debug_layers["debug_overlap"].extend(iter_polygons(overlap))
+            debug_layers["overlap"].extend({
+                "polygon": poly,
+                "edge_id": rec_a["edge_id"],
+                "lane_index": rec_a["lane_index"]
+            } for poly in iter_polygons(overlap))
             seams = robust_shared_boundary(poly_a, poly_b, SEAM_DETECTION_EPSILON)
             
             for seam in seams:

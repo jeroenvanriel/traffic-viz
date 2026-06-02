@@ -1,5 +1,23 @@
 from shapely.geometry import Polygon, MultiPolygon, LineString, MultiLineString
 
+def serialize_layer(name, records, metadata_fields=None):
+    if metadata_fields is None:
+        metadata_fields = []
+    
+    return {
+        "name": name,
+        "shapes": [
+            {
+                "polygon": serialize_polygon(rec["polygon"]),
+                "metadata": {field: rec[field] for field in metadata_fields},
+            } if isinstance(rec, dict) else 
+            {
+                "polygon": serialize_polygon(rec)
+            }
+            for rec in records
+        ]
+    }
+
 def serialize_polygon(p: Polygon):
     return {
         "outer": [{"x": x, "y": y} for x, y in p.exterior.coords],

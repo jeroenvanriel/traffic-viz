@@ -1,53 +1,81 @@
 import { useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
-import { useRoadLayerStore } from "../stores/RoadLayerStore";
+import { useRoadStore, usePolygonSelectionStore } from "../stores/RoadStore";
 
-function LayerCheckbox({ layerId }: { layerId: string }) {
-  const layerVisibility = useRoadLayerStore((s) => s.layerVisibility);
-  const setLayerVisibility = useRoadLayerStore((s) => s.setLayerVisibility);
+function LayerCheckbox({
+  layerId,
+  layerName,
+  isSelected,
+}: {
+  layerId: string;
+  layerName: string;
+  isSelected: boolean;
+}) {
+  const layerVisibility = useRoadStore((s) => s.layerVisibility);
+  const setLayerVisibility = useRoadStore((s) => s.setLayerVisibility);
+  const selectedPolygon = usePolygonSelectionStore((s) => s.selectedPolygon);
+  const clearSelectedPolygon = usePolygonSelectionStore((s) => s.clearSelectedPolygon);
 
   return (
     <label
       key={layerId}
-      className="flex items-center gap-2 text-xs font-medium text-gray-700 select-none cursor-pointer"
+      className={`flex items-center gap-2 rounded-md border px-2 py-1 text-xs font-medium select-none cursor-pointer transition ${
+        isSelected
+          ? "border-purple-200 bg-purple-50 text-purple-700"
+          : "border-transparent text-gray-700 hover:border-gray-200 hover:bg-gray-50"
+      }`}
     >
       <input
         type="checkbox"
         checked={layerVisibility[layerId] !== false}
-        onChange={(e) => setLayerVisibility(layerId, e.target.checked)}
+        onChange={(e) => {
+          const visible = e.target.checked;
+          setLayerVisibility(layerId, visible);
+
+          if (
+            !visible &&
+            selectedPolygon?.layerId === layerId
+          ) {
+            clearSelectedPolygon();
+          }
+        }}
         className="h-4 w-4 cursor-pointer"
       />
-      {layerId.replace(/_/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase())}
+      {layerName}
     </label>
   );
 }
 
 export default function LayerVisibilityPanel() {
-  const availableLayers = useRoadLayerStore((s) => s.availableLayers);
+  const layers = useRoadStore((s) => s.layers);
+  const debugLayers = useRoadStore((s) => s.debugLayers);
+  const selectedLayerId = usePolygonSelectionStore((s) => s.selectedPolygon?.layerId ?? null);
   const [debugLayersOpen, setDebugLayersOpen] = useState(false);
-
-  const baseLayers = availableLayers.filter((layerId) => !layerId.startsWith("debug_"));
-  const debugLayers = availableLayers.filter((layerId) => layerId.startsWith("debug_"));
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-gray-900">Road Layers</h3>
-        {availableLayers.length === 0 && (
+        {Object.values(layers).length === 0 && (
           <div className="text-xs text-gray-500">No layers available.</div>
         )}
         <div className="space-y-2">
-          {baseLayers.map((layerId) => (
-            <LayerCheckbox key={layerId} layerId={layerId} />
+          {Object.entries(layers).map(([layerId, layer]) => (
+            <LayerCheckbox
+              key={layerId}
+              layerId={layerId}
+              layerName={layer.name}
+              isSelected={selectedLayerId === layerId}
+            />
           ))}
         </div>
 
-        {debugLayers.length > 0 && (
+        {Object.values(debugLayers).length > 0 && (
           <div className="border-t border-dashed border-gray-200 pt-3">
             <button
               type="button"
-              className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 transition hover:text-gray-700"
+              className="cursor-pointer flex w-full items-center justify-between rounded-md px-1 py-1 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 transition hover:text-gray-700"
               aria-expanded={debugLayersOpen}
               onClick={() => setDebugLayersOpen((value) => !value)}
             >
@@ -59,8 +87,13 @@ export default function LayerVisibilityPanel() {
 
             {debugLayersOpen && (
               <div className="mt-2 space-y-2 rounded-md bg-gray-50 p-3">
-                {debugLayers.map((layerId) => (
-                  <LayerCheckbox key={layerId} layerId={layerId} />
+                {Object.entries(debugLayers).map(([layerId, layer]) => (
+                  <LayerCheckbox
+                    key={layerId}
+                    layerId={layerId}
+                    layerName={layer.name}
+                    isSelected={selectedLayerId === layerId}
+                  />
                 ))}
               </div>
             )}

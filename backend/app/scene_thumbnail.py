@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 
 from app.util import get_root_folder
 from app.network.api import load_sumo_network
-from app.network.road import build_lane_records, get_junction_polygons
+from app.network.road import build_lane_records, build_junction_records
 
 router = APIRouter(prefix="/scenes/{scene_id}")
 
@@ -44,8 +44,9 @@ def _render_thumbnail(scene_id: str, output_path: Path):
         raise HTTPException(status_code=404, detail="Scene road network not found") from exc
 
     lane_records = build_lane_records(root)
+    junction_records = build_junction_records(root)
     lane_polys = [rec["polygon"] for rec in lane_records]
-    junc_polys = get_junction_polygons(root)
+    junc_polys = [rec["polygon"] for rec in junction_records]
     polygons = [poly for poly in lane_polys + junc_polys if not poly.is_empty]
 
     image = Image.new("RGB", (THUMBNAIL_SIZE, THUMBNAIL_SIZE), THUMBNAIL_BACKGROUND)

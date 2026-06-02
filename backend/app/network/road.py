@@ -45,21 +45,28 @@ def build_lane_records(root):
     return records
 
 
-def get_junction_polygons(root):
-    polygons = []
-
+def build_junction_records(root):
+    junction_records = []
     for junction in root.findall("junction"):
         shape_str = junction.get("shape")
-        if not shape_str:
+        junction_id = junction.get("id")
+        if not shape_str or not junction_id:
             continue
 
+        points = []
         points = parse_sumo_coords(shape_str)
         if len(points) <= 2:
             continue
 
-        polygons.append(Polygon(points))
+        polygon = Polygon(points)
+        if polygon.is_empty:
+            continue
 
-    return polygons
+        junction_records.append({
+            "id": junction_id,
+            "polygon": polygon,
+        })
+    return junction_records
 
 
 def compute_lane_markings(lane_records):

@@ -11,46 +11,34 @@ import { useVehicleStore } from "../stores/VehicleStore";
 import { useReplayController } from "../stores/ReplayController";
 import { useKeyframeStore } from "../stores/KeyframeStore";
 import { useSceneSettingsStore } from "../stores/SceneSettingsStore";
+import { useRoadStore, usePolygonSelectionStore  } from "../stores/RoadStore.ts";
 import { useVehicleTypeStore, useVehicleTypeSync } from "../stores/VehicleTypeStore";
-import { useRoadLayerStore } from "../stores/RoadLayerStore";
 
-function resetAllReplayStores() {
-  useVehicleStore.getState().reset();
-  useReplayController.getState().reset();
-  useVehicleTypeStore.getState().reset();
-}
-
-export default function ScenePage() {
-  const { sceneId } = useParams();
-  if (!sceneId) return null;
-  const load = useReplayController((s) => s.load);
-  const info = useReplayController((s) => s.info);
-  const loadSequences = useKeyframeStore((s) => s.loadSequences);
+function useSceneLoader(sceneId: string) {
+  const loadRoadData = useRoadStore(s => s.load);
+  const loadReplayMetadata = useReplayController((s) => s.load);
+  const loadCameraSequences = useKeyframeStore((s) => s.loadSequences);
   const loadSceneSettings = useSceneSettingsStore((s) => s.loadSceneSettings);
-  const timelineRef = useRef<SVGSVGElement | null>(null);
-  const hideTimerRef = useRef<number | null>(null);
-  const isMapInteractingRef = useRef(false);
-  const [autoHideEnabled, setAutoHideEnabled] = useState(false);
-  const [isUiVisible, setIsUiVisible] = useState(true);
-  const resetRoadLayers = useRoadLayerStore((s) => s.reset);
-  const replayMaxStep = info ? info.nSteps - 1 : 0;
-  const cameraTimeline = useCameraTimelineEditor(replayMaxStep, timelineRef);
-
-  useVehicleTypeSync(sceneId);
 
   useEffect(() => {
     // clear old data
-    resetAllReplayStores();
+    useVehicleStore.getState().reset();
+    useReplayController.getState().reset();
+    useVehicleTypeStore.getState().reset();
+    useRoadStore.getState().reset();
+    usePolygonSelectionStore.getState().clearSelectedPolygon();
 
-    // load replay metadata
-    void load(sceneId);
-    void loadSequences(sceneId);
-    void loadSceneSettings(sceneId);
-  }, [sceneId, load, loadSequences, loadSceneSettings]);
+    loadRoadData(sceneId);
+    loadReplayMetadata(sceneId);
+    loadCameraSequences(sceneId);
+    loadSceneSettings(sceneId);
+  }, [sceneId]);
+}
 
-  useEffect(() => {
-    resetRoadLayers();
-  }, [sceneId, resetRoadLayers]);
+function useAutoHideUI(enabled: boolean) {
+  const hideTimerRef = useRef<number | null>(null);
+  const isMapInteractingRef = useRef(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const clearHideTimer = () => {
@@ -63,19 +51,18 @@ export default function ScenePage() {
     const scheduleHide = () => {
       clearHideTimer();
       hideTimerRef.current = window.setTimeout(() => {
-        setIsUiVisible(false);
+        setIsVisible(false);
       }, 20);
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (isMapInteractingRef.current) {
-        return;
-      }
+      if (isMapInteractingRef.current) return;
 
-      const isInSidebarRevealZone = event.clientX <= 384;
-      const isInTimelineRevealZone = window.innerHeight - event.clientY <= 120;
-      if (isInSidebarRevealZone || isInTimelineRevealZone) {
-        setIsUiVisible(true);
+      const sidebarZone = event.clientX <= 384;
+      const timelineZone = window.innerHeight - event.clientY <= 120;
+
+      if (sidebarZone || timelineZone) {
+        setIsVisible(true);
         clearHideTimer();
       } else {
         scheduleHide();
@@ -94,9 +81,9 @@ export default function ScenePage() {
       isMapInteractingRef.current = false;
     };
 
-    if (!autoHideEnabled) {
+    if (!enabled) {
       clearHideTimer();
-      setIsUiVisible(true);
+      setIsVisible(true);
       return;
     }
 
@@ -112,7 +99,26 @@ export default function ScenePage() {
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
     };
-  }, [autoHideEnabled]);
+  }, [enabled]);
+
+  return isVisible;
+}
+
+export default function ScenePage() {
+  const { sceneId } = useParams();
+  if (!sceneId) return null;
+
+  const info = useReplayController((s) => s.info);
+  const timelineRef = useRef<SVGSVGElement | null>(null);
+  const replayMaxStep = info ? info.nSteps - 1 : 0;
+  const cameraTimeline = useCameraTimelineEditor(replayMaxStep, timelineRef);
+
+  useSceneLoader(sceneId);
+
+  useVehicleTypeSync(sceneId);
+
+  const [autoHideEnabled, setAutoHideEnabled] = useState(false);
+  const isUiVisible = useAutoHideUI(autoHideEnabled);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
@@ -131,7 +137,7 @@ export default function ScenePage() {
           timelineRef={timelineRef}
           isVisible={isUiVisible}
         />
-        <Scene sceneId={sceneId} />
+        <Scene />
       </div>
     </div>
   )
