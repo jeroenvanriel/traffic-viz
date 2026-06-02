@@ -1,7 +1,33 @@
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 import { useRoadStore, usePolygonSelectionStore } from "../stores/RoadStore";
+
+type TriStateCheckboxProps =
+  React.InputHTMLAttributes<HTMLInputElement> & {
+    indeterminate: boolean;
+  };
+function TriStateCheckbox({
+  indeterminate,
+  ...props
+}: TriStateCheckboxProps) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.indeterminate = indeterminate;
+    }
+  }, [indeterminate]);
+
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={props.checked}
+      {...props}
+    />
+  );
+}
 
 function LayerCheckbox({
   layerId,
@@ -16,6 +42,17 @@ function LayerCheckbox({
   const setLayerVisibility = useRoadStore((s) => s.setLayerVisibility);
   const selectedPolygon = usePolygonSelectionStore((s) => s.selectedPolygon);
   const clearSelectedPolygon = usePolygonSelectionStore((s) => s.clearSelectedPolygon);
+  const hiddenShapes = useRoadStore((s) => s.hiddenShapes[layerId]?.size ?? 0);
+  const totalShapes = useRoadStore((s) => s.layers[layerId]?.shapes.length ?? s.debugLayers[layerId]?.shapes.length ?? 0);
+
+  let state: "checked" | "unchecked" | "indeterminate";
+  if (hiddenShapes === 0 && layerVisibility[layerId] !== false) {
+    state = "checked";
+  } else if (layerVisibility[layerId] === false) {
+    state = "unchecked";
+  } else {
+    state = "indeterminate";
+  }
 
   return (
     <label
@@ -26,9 +63,9 @@ function LayerCheckbox({
           : "border-transparent text-gray-700 hover:border-gray-200 hover:bg-gray-50"
       }`}
     >
-      <input
-        type="checkbox"
-        checked={layerVisibility[layerId] !== false}
+      <TriStateCheckbox
+        checked={state === "checked"}
+        indeterminate={state === "indeterminate"}
         onChange={(e) => {
           const visible = e.target.checked;
           setLayerVisibility(layerId, visible);
@@ -43,6 +80,14 @@ function LayerCheckbox({
         className="h-4 w-4 cursor-pointer"
       />
       {layerName}
+      <span className="text-gray-500">
+        ({totalShapes} shapes)
+      </span>
+      {state === "indeterminate" && (
+        <span className="text-gray-500">
+          ({hiddenShapes} hidden)
+        </span>
+      )}
     </label>
   );
 }
