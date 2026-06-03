@@ -78,4 +78,4 @@ by Sidewalk Labs (licensed under the Eclipse Public License v2.0).
 Early development of this project was funded by [NWO](https://www.nwo.nl/en) as part of ["Implementing Stochastic Models for Intersections with Regulated Traffic" (ISMIRT)](https://www.nwo.nl/en/projects/43920616) and a preliminary version of the visualization was presented during the ["ISMIRT Workshop on Urban Traffic Management and Control"](https://www.utwente.nl/en/eemcs/sor/events/symposia/220610_ISMIRT%20workshop%20on%20Urban%20Traffic%20Management%20and%20control/).
 
 
-[^openstreetmap-attribution-error]: Last time I tried to use this tool, I noticed that the OpenStreetMap API replaces some map blocks with warning images, caused by a lack of proper attribution. It may well be that this issue has been fixed in a current version of SUMO.
+[^openstreetmap-attribution-error]: At the time of writing this, I am using SUMO version 1.27.0 on Ubuntu 22.04. Make sure to update to at least this version, since this release contains a fix to an “missing attribution” issue in the OSM import process, see [this issue](https://github.com/eclipse-sumo/sumo/issues/17941).
