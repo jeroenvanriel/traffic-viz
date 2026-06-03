@@ -122,35 +122,38 @@ def compute_opposite_direction_markings(lane_records, marking_width=0.2):
     polys = [rec["polygon"] for rec in lane_records]
     tree = STRtree(polys)
     
-    # Track processed pairs to avoid duplicates
-    processed = set()
+    # Track processed polygons to avoid duplicates
+    processed_pairs = set()
+    processed_b = {}
     
     for i, rec_a in enumerate(lane_records):
-        poly_a = rec_a["polygon"]
-        
         # Find candidate neighbors via spatial index
-        candidates = tree.query(poly_a.envelope.buffer(SEAM_DETECTION_EPSILON * 2))
-
-        band_a = poly_a.boundary.buffer(SEAM_DETECTION_EPSILON, cap_style=2, join_style=2)
+        poly_a = rec_a["polygon"]
+        band_a = poly_a.buffer(SEAM_DETECTION_EPSILON * 2, cap_style=2, join_style=2)
+        debug_layers["band_a"].append({ "polygon": band_a, "edge_id": rec_a["edge_id"], "lane_index": rec_a["lane_index"], "i": i })
+        candidates = tree.query(band_a)
         
         for j in candidates:
-            if i >= j or (i, j) in processed:
+            if i >= j or (i, j) in processed_pairs:
                 continue
             
-            processed.add((i, j))
+            processed_pairs.add((i, j))
             
-            rec_b = lane_records[j]
-            poly_b = rec_b["polygon"]
-            
-            # Skip same-edge pairs (handled by compute_lane_markings)
-            if rec_a["edge_id"] == rec_b["edge_id"]:
-                continue
+            if j in processed_b:
+                poly_b, band_b = processed_b[j]
+            else:
+                rec_b = lane_records[j]
+                poly_b = rec_b["polygon"]
+                
+                # Skip same-edge pairs (handled by compute_lane_markings)
+                if rec_a["edge_id"] == rec_b["edge_id"]:
+                    continue
 
-            poly_b = rec_b["polygon"]
-            band_b = poly_b.boundary.buffer(SEAM_DETECTION_EPSILON, cap_style=2, join_style=2)
+                poly_b = rec_b["polygon"]
+                band_b = poly_b.buffer(SEAM_DETECTION_EPSILON * 2, cap_style=2, join_style=2)
+                debug_layers["band_b"].append({ "polygon": band_b, "edge_id": rec_b["edge_id"], "lane_index": rec_b["lane_index"], "j": int(j) })
 
-            debug_layers["band_a"].append({ "polygon": band_a, "edge_id": rec_a["edge_id"], "lane_index": rec_a["lane_index"] })
-            debug_layers["band_b"].append({ "polygon": band_b, "edge_id": rec_b["edge_id"], "lane_index": rec_b["lane_index"] })
+                processed_b[j] = (poly_b, band_b)
             
             # Find robust shared seams
             overlap = band_a.intersection(band_b)
