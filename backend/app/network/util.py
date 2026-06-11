@@ -44,7 +44,7 @@ def dashed_line_to_polygons(
     if line.is_empty or line.length <= 1e-6:
         return dashes
 
-    position = 0.0
+    position = DEFAULT_GAP_LENGTH / 2  # Start with half a gap to center the dashes
     while position < line.length:
         dash_end = min(position + dash_length, line.length)
         dash_geom = substring(line, position, dash_end)
