@@ -1,0 +1,8 @@
+<edges>
+  <edge id="edge_1" width="2.00" from="node_1" to="node_2" numLanes="2" spreadType="roadCenter" />
+  <edge id="edge_2" width="2.00" from="node_2" to="node_1" numLanes="3" spreadType="roadCenter" />
+  <edge id="edge_3" width="2.00" from="node_3" to="node_4" numLanes="2" spreadType="right" />
+  <edge id="edge_4" width="2.00" from="node_4" to="node_3" numLanes="3" spreadType="right" />
+  <edge id="edge_5" width="2.00" from="node_5" to="node_6" numLanes="3" spreadType="center" />
+  <edge id="edge_6" width="2.00" from="node_7" to="node_8" numLanes="3" spreadType="right" />
+</edges>
