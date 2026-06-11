@@ -59,3 +59,99 @@ def dashed_line_to_polygons(
         position += dash_length + gap_length
 
     return dashes
+
+
+class SVG:
+    """Simple SVG writer for polygons with attributes."""
+
+    def __init__(self, bounds, background="#40eba4"):
+        self._bounds = bounds
+        if background is not None:
+            self._background = f'''
+            <rect
+                x="{bounds['minx']}"
+                y="{bounds['miny']}"
+                width="{bounds['maxx'] - bounds['minx']}"
+                height="{bounds['maxy'] - bounds['miny']}"
+                fill="{background}" />
+            '''
+        self._defs = """
+        <defs>
+            <marker
+                id="arrow"
+                markerWidth="10"
+                markerHeight="10"
+                refX="8"
+                refY="3"
+                orient="auto">
+
+                <path d="M 0,0 L 0,6 L 9,3 z" fill="black"/>
+            </marker>
+        </defs>
+        """
+        self._elements = []
+
+    def draw_polygons(self, polys, **attrs):
+        attrs = {
+            # default attributes
+            "fill": "none",
+            "stroke": "black",
+            "stroke-width": "0.2",
+            # rename underscore to dash for SVG attributes
+            **{k.replace("_", "-"): v for k, v in attrs.items()}
+        }
+        for poly in polys:
+            coords = poly.exterior.coords
+            path = " ".join(
+                f"{'M' if i == 0 else 'L'} {x},{y}"
+                for i, (x, y) in enumerate(coords)
+            )
+            self._elements.append(f'<path d="{path} Z" {"".join(f' {k}="{v}"' for k, v in attrs.items())} />')
+        
+    def draw_lines(self, lines, arrow=False, dashed=False, **attrs):
+        attrs = {
+            "fill": "none",
+            "stroke": "black",
+            "stroke-width": "0.2",
+            **{"marker-end": "url(#arrow)" if arrow else {}},
+            **{"stroke-dasharray": "1,1" if dashed else {}},
+            # rename underscore to dash for SVG attributes
+            **{k.replace("_", "-"): v for k, v in attrs.items()}
+        }
+        for line in lines:
+            x1, y1, x2, y2 = line
+            self._elements.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" {"".join(f' {k}="{v}"' for k, v in attrs.items())} />')
+    
+    def draw_points(self, points, **attrs):
+        attrs = {
+            "fill": "black",
+            "stroke": "none",
+            "r": "0.1",
+            # rename underscore to dash for SVG attributes
+            **{k.replace("_", "-"): v for k, v in attrs.items()}
+        }
+        for point in points:
+            x, y = point
+            self._elements.append(f'<circle cx="{x}" cy="{y}" {"".join(f' {k}="{v}"' for k, v in attrs.items())} />')
+    
+    def draw_text(self, x, y, text, **attrs):
+        attrs = {
+            "fill": "black",
+            "font-size": "0.5",
+            # rename underscore to dash for SVG attributes
+            **{k.replace("_", "-"): v for k, v in attrs.items()}
+        }
+        self._elements.append(f'<text x="{x}" y="{y}" {"".join(f' {k}="{v}"' for k, v in attrs.items())}>{text}</text>')
+
+    def write(self, filename):
+        svg = f'''
+        <svg xmlns="http://www.w3.org/2000/svg"
+            viewBox="{self._bounds['minx']} {self._bounds['miny']} {self._bounds['maxx']-self._bounds['minx']} {self._bounds['maxy']-self._bounds['miny']}">
+            {self._defs}
+            {self._background if hasattr(self, "_background") else ""}
+            {"\n".join(self._elements)}
+        </svg>
+        '''
+
+        with open(filename, "w") as f:
+            f.write(svg)
