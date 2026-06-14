@@ -4,7 +4,7 @@ from app.util import get_root_folder
 from app.cache import compute_cache_key, load_cache, save_cache
 from .serialization import serialize_layer
 from .road import build_lane_records, build_junction_records, compute_bounds, compute_lane_markings, compute_edge_markings
-from .opposite_marking import compute_opposite_direction_markings
+from .parallel_marking import compute_parallel_direction_markings
 
 
 def load_sumo_network(scene_id: str):
@@ -26,23 +26,23 @@ async def get_road_network(scene_id: str):
     bounds = load_cache(scene_id, "bounds", cache_key)
     lane_markings_layer = load_cache(scene_id, "lane_markings", cache_key)
     edge_markings_layer = load_cache(scene_id, "edge_markings", cache_key)
-    opposite_markings_layer = load_cache(scene_id, "opposite_markings", cache_key)
-    band_a_layer = load_cache(scene_id, "opposite_band_a", cache_key)
-    band_b_layer = load_cache(scene_id, "opposite_band_b", cache_key)
-    overlap_layer = load_cache(scene_id, "opposite_overlap", cache_key)
+    parallel_markings_layer = load_cache(scene_id, "parallel_markings", cache_key)
+    band_a_layer = load_cache(scene_id, "parallel_band_a", cache_key)
+    band_b_layer = load_cache(scene_id, "parallel_band_b", cache_key)
+    overlap_layer = load_cache(scene_id, "parallel_overlap", cache_key)
     if (
         lanes_layer is None
         or junctions_layer is None
         or bounds is None
         or lane_markings_layer is None
         or edge_markings_layer is None
-        or opposite_markings_layer is None
+        or parallel_markings_layer is None
         or band_a_layer is None
         or band_b_layer is None
         or overlap_layer is None
+        or True # TODO: remove this to enable caching
     ):
-        # Construct lane records
-        # (containing geometry and metadata for reuse in opposite markings computation)
+        # Construct lane and junction records
         lane_records = build_lane_records(root)
         junction_records = build_junction_records(root)
 
@@ -56,26 +56,26 @@ async def get_road_network(scene_id: str):
         # Compute lane markings
         lane_markings = compute_lane_markings(lane_records)
         edge_markings = compute_edge_markings(lane_polys + junc_polys)
-        opposite_markings, opposite_marking_debug = compute_opposite_direction_markings(lane_records)
+        parallel_markings, parallel_marking_debug = compute_parallel_direction_markings(lane_records)
 
         # Serialize and cache layers
         lanes_layer = serialize_layer("Lanes", lane_records, metadata_fields=["edge_id", "lane_index"])
         junctions_layer = serialize_layer("Junctions", junction_records, metadata_fields=["id"])
         lane_markings_layer = serialize_layer("Lane Markings", lane_markings)
         edge_markings_layer = serialize_layer("Edge Markings", edge_markings)
-        opposite_markings_layer = serialize_layer("Opposite Markings", opposite_markings)
-        band_a_layer = serialize_layer("Band A", opposite_marking_debug["band_a"], metadata_fields=["edge_id", "lane_index"])
-        band_b_layer = serialize_layer("Band B", opposite_marking_debug["band_b"], metadata_fields=["edge_id", "lane_index"])
-        overlap_layer = serialize_layer("Overlap", opposite_marking_debug["overlap"], metadata_fields=["edge_id", "lane_index"])
+        parallel_markings_layer = serialize_layer("parallel Markings", parallel_markings)
+        band_a_layer = serialize_layer("Band A", parallel_marking_debug["band_a"], metadata_fields=["edge_id", "lane_index", "i"])
+        band_b_layer = serialize_layer("Band B", parallel_marking_debug["band_b"], metadata_fields=["edge_id", "lane_index", "j"])
+        overlap_layer = serialize_layer("Overlap", parallel_marking_debug["overlap"], metadata_fields=["edge_id", "lane_index"])
 
         save_cache(scene_id, "lanes", cache_key, lanes_layer)
         save_cache(scene_id, "junctions", cache_key, junctions_layer)
         save_cache(scene_id, "lane_markings", cache_key, lane_markings_layer)
         save_cache(scene_id, "edge_markings", cache_key, edge_markings_layer)
-        save_cache(scene_id, "opposite_markings", cache_key, opposite_markings_layer)
-        save_cache(scene_id, "opposite_band_a", cache_key, band_a_layer)
-        save_cache(scene_id, "opposite_band_b", cache_key, band_b_layer)
-        save_cache(scene_id, "opposite_overlap", cache_key, overlap_layer)
+        save_cache(scene_id, "parallel_markings", cache_key, parallel_markings_layer)
+        save_cache(scene_id, "parallel_band_a", cache_key, band_a_layer)
+        save_cache(scene_id, "parallel_band_b", cache_key, band_b_layer)
+        save_cache(scene_id, "parallel_overlap", cache_key, overlap_layer)
         save_cache(scene_id, "bounds", cache_key, bounds)
 
     return {
@@ -84,12 +84,12 @@ async def get_road_network(scene_id: str):
             "junctions": junctions_layer,
             "lane_markings": lane_markings_layer,
             "edge_markings": edge_markings_layer,
-            "opposite_markings": opposite_markings_layer,
+            "parallel_markings": parallel_markings_layer,
         },
         "debug_layers": {
-            "opposite_band_a": band_a_layer,
-            "opposite_band_b": band_b_layer,
-            "opposite_overlap": overlap_layer,
+            "parallel_band_a": band_a_layer,
+            "parallel_band_b": band_b_layer,
+            "parallel_overlap": overlap_layer,
         },
         "bounds": bounds,
     }

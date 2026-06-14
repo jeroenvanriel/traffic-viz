@@ -13,9 +13,9 @@ const LAYER_STYLES: Record<string, LayerStyle> = {
   lanes: { color: "darkgrey", yOffset: 0, side: three.DoubleSide },
   junctions: { color: "darkgrey", yOffset: -0.01, side: three.DoubleSide },
   edge_markings: { color: "white", yOffset: 0.01, side: three.DoubleSide },
-  opposite_markings: { color: "#ffd84d", yOffset: 0.015, side: three.DoubleSide },
-  opposite_band_a: { color: "white", yOffset: -0.02, side: three.DoubleSide },
-  opposite_band_b: { color: "white", yOffset: -0.02, side: three.DoubleSide },
+  parallel_markings: { color: "#ffd84d", yOffset: 0.015, side: three.DoubleSide },
+  parallel_band_a: { color: "white", yOffset: -0.02, side: three.DoubleSide },
+  parallel_band_b: { color: "white", yOffset: -0.02, side: three.DoubleSide },
 };
 
 const FALLBACK_LAYER_STYLE: LayerStyle = {

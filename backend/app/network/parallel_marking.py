@@ -5,10 +5,9 @@ import pygeoops
 from .util import iter_lines, iter_polygons, dashed_line_to_polygons
 
 
-# Configuration of opposite-direction seam detection and marking
+# Configuration of parallel-direction seam detection and marking
 SEAM_DETECTION_EPSILON = 0.2  # Tolerance for robust boundary detection
 MIN_SEAM_LENGTH = 0.5  # Minimum shared seam length to create marking
-OPPOSITE_SEAM_STYLE = "dashed"  # "solid" for continuous, "dashed" for dashed
 
 
 def robust_shared_boundary(poly_a: Polygon, poly_b: Polygon, eps: float) -> list[LineString]:
@@ -83,8 +82,8 @@ def sample_tangent_at_distance(line: LineString, distance: float) -> np.ndarray 
     return tangent / norm
 
 
-def seams_have_opposite_direction(centerline_a: LineString, centerline_b: LineString, seam: LineString) -> bool:
-    """Check if two lane centerlines have opposite directions at the seam location."""
+def seams_have_parallel_direction(centerline_a: LineString, centerline_b: LineString, seam: LineString) -> bool:
+    """Check if two lane centerlines have parallel or opposite directions at the seam location."""
     if seam.length < 1e-6:
         return False
     
@@ -102,13 +101,13 @@ def seams_have_opposite_direction(centerline_a: LineString, centerline_b: LineSt
     if tangent_a is None or tangent_b is None:
         return False
     
-    # Check if tangents point in opposite directions (dot product < -0.7)
+    # Check if tangents point in parallel or opposite directions
     dot = np.dot(tangent_a, tangent_b)
-    return dot < -0.7
+    return dot < -0.7 or dot > 0.7  # Consider both opposite and parallel directions as valid seams
 
 
-def compute_opposite_direction_markings(lane_records, marking_width=0.2):
-    """Compute opposite-direction markings and debug geometry layers."""
+def compute_parallel_direction_markings(lane_records, marking_width=0.2, parallel_seam_style="solid"):
+    """Compute parallel-direction markings and debug geometry layers."""
     markings = []
     debug_layers = {
         "band_a": [],
@@ -129,9 +128,15 @@ def compute_opposite_direction_markings(lane_records, marking_width=0.2):
     for i, rec_a in enumerate(lane_records):
         # Find candidate neighbors via spatial index
         poly_a = rec_a["polygon"]
-        band_a = poly_a.buffer(SEAM_DETECTION_EPSILON * 2, cap_style=2, join_style=2)
-        debug_layers["band_a"].append({ "polygon": band_a, "edge_id": rec_a["edge_id"], "lane_index": rec_a["lane_index"], "i": i })
+        band_a = poly_a.buffer(SEAM_DETECTION_EPSILON, cap_style=2, join_style=2)
         candidates = tree.query(band_a)
+        debug_layers["band_a"].append({
+            "polygon": band_a,
+            "edge_id": rec_a["edge_id"],
+            "lane_index": rec_a["lane_index"],
+            "i": i,
+            "candidates": candidates
+        })
         
         for j in candidates:
             if i >= j or (i, j) in processed_pairs:
@@ -150,7 +155,7 @@ def compute_opposite_direction_markings(lane_records, marking_width=0.2):
                     continue
 
                 poly_b = rec_b["polygon"]
-                band_b = poly_b.buffer(SEAM_DETECTION_EPSILON * 2, cap_style=2, join_style=2)
+                band_b = poly_b.buffer(SEAM_DETECTION_EPSILON, cap_style=2, join_style=2)
                 debug_layers["band_b"].append({ "polygon": band_b, "edge_id": rec_b["edge_id"], "lane_index": rec_b["lane_index"], "j": int(j) })
 
                 processed_b[j] = (poly_b, band_b)
@@ -165,14 +170,14 @@ def compute_opposite_direction_markings(lane_records, marking_width=0.2):
             seams = robust_shared_boundary(poly_a, poly_b, SEAM_DETECTION_EPSILON)
             
             for seam in seams:
-                # Check if opposite direction
-                if seams_have_opposite_direction(rec_a["centerline"], rec_b["centerline"], seam):
+                # Check if parallel or opposite direction
+                if seams_have_parallel_direction(rec_a["centerline"], rec_b["centerline"], seam):
                     # Convert seam to solid polygon marking
-                    if OPPOSITE_SEAM_STYLE == "solid":
+                    if parallel_seam_style == "solid":
                         marking_poly = seam.buffer(marking_width / 2, cap_style=2, join_style=2)
                         if not marking_poly.is_empty:
                             markings.append(marking_poly)
-                    elif OPPOSITE_SEAM_STYLE == "dashed":
+                    elif parallel_seam_style == "dashed":
                         dashes = dashed_line_to_polygons(
                             seam,
                             width=marking_width,

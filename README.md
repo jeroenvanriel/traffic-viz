@@ -66,7 +66,7 @@ npm run dev
 - The backend parses the network file and converts it into polygon data.
 - Solid edge markings are computed by offsetting the union of all lane polygons.
 - Dashed lane dividers for multi-lane edges are computed from the lane centerlines, which are provided in the network files.
-- Computing dashed lane dividers for opposite lanes is a bit more involved. It involves identifying pairs of opposite lanes, then offsetting the lanes slightly and then using the overlap to compute their shared border.
+- Computing dashed lane dividers for parallel lanes is a bit more involved. It involves identifying pairs of parallel lanes, then offsetting the lanes slightly and then using the overlap to compute their shared border.
 - Vehicle movements are streamed as *delta packets*, minimizing redundant data transfer. To enable fast seeking, the backend also precomputes a set of *snapshots* at regular intervals, which contain the full state of the scene at that step.
 
 
