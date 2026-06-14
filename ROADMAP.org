@@ -18,8 +18,10 @@ The target of the camera should always stay on the horizontal plane (or slightly
 * gui
 ** TODO loading spinner for network loading
 Instead of showing a small empty patch of green, show a spinner animation with "network loading".
+** TODO open layers sidebar when selecting a polygon
 ** DONE sidebar toggle button
 * rendering and network loading
+** TODO use loading state from RoadStore to show loading indicators and disable some parts of the gui
 ** TODO understand, document and fix SUMO network loading
 Ignore empty polygons on the backend.
 
