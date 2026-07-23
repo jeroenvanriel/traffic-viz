@@ -119,8 +119,10 @@ class SVG:
             **{k.replace("_", "-"): v for k, v in attrs.items()}
         }
         for line in lines:
-            x1, y1, x2, y2 = line
-            self._elements.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" {"".join(f' {k}="{v}"' for k, v in attrs.items())} />')
+            for point1, point2 in zip(line.coords[:-1], line.coords[1:]):
+                x1, y1 = point1
+                x2, y2 = point2
+                self._elements.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" {"".join(f' {k}="{v}"' for k, v in attrs.items())} />')
     
     def draw_points(self, points, **attrs):
         attrs = {
