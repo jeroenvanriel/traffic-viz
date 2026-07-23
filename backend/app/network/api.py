@@ -63,7 +63,7 @@ async def get_road_network(scene_id: str):
         junctions_layer = serialize_layer("Junctions", junction_records, metadata_fields=["id"])
         lane_markings_layer = serialize_layer("Lane Markings", lane_markings)
         edge_markings_layer = serialize_layer("Edge Markings", edge_markings)
-        parallel_markings_layer = serialize_layer("Parallel Markings", parallel_markings)
+        parallel_markings_layer = serialize_layer("Separating Centerlines", parallel_markings)
         band_a_layer = serialize_layer("Band A", parallel_marking_debug["band_a"], metadata_fields=["edge_id", "lane_index", "i"])
         band_b_layer = serialize_layer("Band B", parallel_marking_debug["band_b"], metadata_fields=["edge_id", "lane_index", "j"])
         overlap_layer = serialize_layer("Overlap", parallel_marking_debug["overlap"], metadata_fields=["edge_id", "lane_index"])
